@@ -3,13 +3,17 @@ This is a plugin for my userbot ([alemibot](https://github.com/alemigliardi/alem
 
 ## Installation
 
-You should first set up [alemibot](https://github.com/alemigliardi/alemibot). Once that is done, just run
+You should first set up [alemibot](https://github.com/alemigliardi/alemibot). Check that repo for installation steps.
 
-	git submodule add -b dev git@github.com:alemigliardi/lootbot.git plugins/lootbot
-	
-in bot's root folder.
+Once alemibot is installed, just run (from telegram)
+	`.install alemidev/lootbot`
+And it will install this plugin and reboot.
 
-After that, just update your bot normally and the submodule will be tracked too.
+## Usage
+
+By default, all tasks are disabled.
+Run `.lcfg` to see all available options.
+Use `.lset` to enable tasks you want/need.
 
 ## Commands
 
