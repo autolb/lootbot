@@ -1,4 +1,4 @@
-( singe @lootgamebot only language is Italian, this repo will almost only be relevant to italian speakers, thus the README is in italian )
+( since @lootgamebot's only language is Italian, this repo will almost only be relevant to italian speakers, thus the README is in italian. You can check the original eng version in the commit history for this file if you really need this but are an english speaker )
 # lootbotplugin
 Questo e' un plugin per il mio userbot, ([alemibot](https://github.com/alemigliardi/alemibot)), per automatizzare @lootgamebot. E' decisamente barare!
 
@@ -12,7 +12,9 @@ E questo plugin verra' scaricato e installato automaticamente.
 
 ### Supporto
 Scrivi in privato a [@alunduyn](https://t.me/alunduyn)! (anche chat segrete)
+
 Il tuo interesse per questo progetto sara' tenuto assolutamente segreto: le nostre chat non saranno divulgate e non ti mettero' in contatto con altri utilizzatori **se non su tua e loro richiesta**.
+
 Non ti fidi? Ti garantisco che non sono l'unico ad usare questo plugin! L'unico motivo per cui edo mi ha bannato e' perche' gli ho mandato io un link a questo repo (:
 
 ## Utilizzo
