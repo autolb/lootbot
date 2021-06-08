@@ -42,7 +42,7 @@ async def on_daily_completed(client, message):
 	name = message.matches[0]["name"]
 	if name in LOOP.state["imprese"]["todo"]:
 		LOOP.state["imprese"]["todo"].remove(name)
-	if CONFIG["imprese"]["single"] and name == "Arte della guerra": # reequip what you had
+	if CONFIG["imprese"]["single"] and name == "Arte della guerra":  # reequip what you had
 		@create_task("Rivestiti", client=client)
 		async def dress_up(ctx):
 			for item in ctx.state["imprese"]["prev-equip"]:
@@ -93,6 +93,7 @@ async def salva_imprese_di_oggi(client, message):
 		}
 	]
 	LOOP.state["imprese"]["todo"] = []
+	LOOP.state["once"] = []
 	for im in LOOP.state["imprese"]["giornaliere"]:
 		if not im["done"]:
 			LOOP.state["imprese"]["todo"].append(im["title"])
@@ -146,6 +147,17 @@ async def salva_imprese_di_oggi(client, message):
 				await random_wait()
 				await mnu(ctx)
 			LOOP.add_task(get_naked)
+		if "Giocatore talentuoso" in LOOP.state["imprese"]["todo"] \
+		and "Giocatore talentuoso" not in LOOP.state["once"]:
+			@create_task("Apri menu talenti", client=client)
+			async def open_talenti(ctx):
+				await ctx.client.send_message(LOOTBOT, "Giocatore 👤")
+				await random_wait()
+				await ctx.client.send_message(LOOTBOT, "Albero Talenti 🌳")
+				await random_wait()
+				await mnu(ctx)
+				LOOP.state["once"].append("Giocatore talentuoso")
+			LOOP.add_task(open_talenti)
 
 PRICE_CHECK = re.compile(r"Pacchetto (?:Epici|Leggendari|Ultra Rari|Rari|Non Comuni|Comuni) \((?P<price>[0-9\.]+) §\)")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il Mercante Pazzo oggi offre"), group=58)
