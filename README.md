@@ -1,6 +1,6 @@
 ( since @lootgamebot's only language is Italian, this repo will almost only be relevant to italian speakers, thus the README is in italian. You can check the original eng version in the commit history for this file if you really need this but are an english speaker )
 # lootbotplugin
-Questo e' un plugin per il mio userbot, ([alemibot](https://github.com/alemigliardi/alemibot)), per automatizzare @lootgamebot. E' decisamente barare!
+Questo e' un plugin per il mio userbot, ([alemibot](https://github.com/alemigliardi/alemibot)), per automatizzare @lootgamebot. Non è barare, la conoscienza è potere! 😎
 
 ## Features
 * Auto Dungeon (molto configurabile, fa imprese auto)
