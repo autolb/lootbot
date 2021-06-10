@@ -20,7 +20,26 @@ Questo e' un plugin per il mio userbot, ([alemibot](https://github.com/alemiglia
 * Auto random checks (cariche esplorative, polvere, mana, ...)
 
 # Installazione
+## Heroku
+Heroku e' una piattaforma che affitta a developers e aziende piccoli containers (docker) per eseguire applicazioni : i dynos.
+Heroku offre dyno con forti limiti gratis, ma per eseguire un bot di telegram le poche risorse offerte sono comunque sufficienti.
 
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/alemidev/alemibot/tree/heroku&env[PLUGINS]=autolb/lootbot)
+
+Usa questo [link](https://replit.com/@dashezup/generate-pyrogram-session-string) per generare una sessione.
+Dovrai inserire API\_ID e API\_HASH (puoi cercarne di default o recuperare i tuoi su [my.telegram.org](https://my.telegram.org/)) e il tuo numero di telefono, 
+e riportare il codice che ricevi. (Il sito e' `repl`, che esegue frammenti di codice in sandox online. 
+Puoi controllare il codice che sta venendo eseguito sulla scheda "Code". E' uno script minimo con l'unico scopo di generarti una stringa di sessione)
+
+Inserisci quindi la stringa che hai ottenuto nei salvati, API\_ID e API\_HASH nei campi sulla pagina di Heroku e premi "deploy"
+
+Una volta finito di creare l'app, dovrai attivarla: vai su "Manage app", poi sulla tab "Resources" modifica lo stato dell'unico 
+worker da spento ad acceso (la spunta, prima il tasto 'modifica' viola)
+
+Il tuo bot e' pronto e partito! Nei tuoi messaggi salvati, controlla il tuo config con `/lcfg [<sub>]` e cambia i parametri che vuoi con `/lset <param> <value>`
+
+Heroku riavvia il tuo dyno ogni 24h, resettanto percio' il tuo config. (stiamo reworkando il caricamento del config per evitare questo, stay tuned)
+## Manuale
 E' necessario prima di tutto installare [alemibot](https://github.com/alemigliardi/alemibot), segui la guida per installare `alemibot`.
 
 Una volta correttamente installato, sara' sufficiente scrivere (da telegram)
