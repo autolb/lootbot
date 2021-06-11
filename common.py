@@ -37,7 +37,7 @@ CONFIG = {
 		},
 		"group" : 0				# Group ID to log into
 	},
-	"talismani" : True,    # Use talismans. Turn off if you don't have them all!
+	"talismani" : False,    # Use talismans. Turn off if you don't have them all!
 	"mission" : {			# Do Missions
 		"auto" : False,			# Restart mission automatically
 		"skip" : False,			# Use gems to skip them
@@ -45,7 +45,7 @@ CONFIG = {
 	},
 	"dungeon" : {			# Do dungeons
 		"auto" : False,			# Run the dungeon automatically
-		"start" : True,			# Start a new dungeon automatically
+		"start" : False,		# Start a new dungeon automatically
 		"maledetto" : False,	# Prefer cursed dungeons, otherwise just pick 1st
 		"varco" : False,		# Use a Varco to restart dungeons immediately (when possible)
 		"hp" : 0.7,				# Heal when health is below this hp threshold (0.7 = 70%)
