@@ -1,88 +1,93 @@
 import os
 import json
+import asyncio
+
+from bot import alemiBot
 
 DEFAULTS = {
 	# TODO move here default config
 }
 
-class ConfigEngine(object):
-	def __init__(self):
-		self.store = DEFAULTS
-
-	def _update_values(self, cfg:dict, src:dict) -> dict:
-		if type(cfg) is not dict: # this is a config value, replace
-			return src
-		if type(src) is not dict: # nothing more to load
-			return cfg
-		for key in cfg:
-			if key in src:
-				cfg[key] = self._update_values(cfg[key], src[key])
+def _update_values(cfg:dict, src:dict) -> dict:
+	if type(cfg) is not dict: # this is a config value, replace
+		return src
+	if type(src) is not dict: # nothing more to load
 		return cfg
+	for key in cfg:
+		if key in src:
+			cfg[key] = _update_values(cfg[key], src[key])
+	return cfg
 
-	def get(self) -> dict:
-		return self.store
-
-	async def unserialize(self) -> bool:
+class ConfigLoader:
+	async def unserialize(self) -> dict:
 		raise NotImplementedError
 
-	async def serialize(self) -> bool:
+	async def serialize(self, data:dict) -> bool:
 		raise NotImplementedError
 	
-class FileEngine(ConfigEngine):
+class FileLoader(ConfigLoader):
 	def __init__(self, path:str):
 		self.path = path
-		super().__init__()
 
-	async def userialize(self):
+	async def userialize(self) -> dict:
 		if not os.path.isfile(self.path):
-			return False
+			return {}
 		with open(self.path) as f:
-			buf = json.load(f)
-		self.store = self._update_values(self.store, buf)
+			return json.load(f)
+
+	async def serialize(self, data:dict) -> bool:
+		with open(self.path, "w") as f:
+			json.dump(data, f)
 		return True
 
-	async def serialize(self):
-		with open(self.path, "w") as f:
-			json.dump(self.store, f)
-
-
-class MessageEngine(ConfigEngine):
+class MessageLoader(ConfigLoader):
 	def __init__(self, client, msg_id:int):
 		self.msg_id = msg_id
 		self.client = client
-		super().__init__()
 
-	async def unserialize(self) -> bool:
+	async def unserialize(self) -> dict:
 		msg = await self.client.get_messages("me", self.msg_id)
 		if msg.empty:
-			return False
-		self.store = json.loads(msg.text)
+			return {}
+		return json.loads(msg.text)
+
+	async def serialize(self, data:dict) -> bool:
+		text = json.dumps(data, default=str)
+		await self.client.edit_message_text("me", self.msg_id, text, parse_mode=None)
 		return True
 
-	async def serialize(self) -> bool:
-		data = json.dumps(self.store, default=str)
-		await self.client.edit_message_text("me", self.msg_id, data, parse_mode=None)
-		return True
+class ConfigHolder:
+	def __init__(self):
+		self.store : dict = DEFAULTS
+		self.loader : ConfigLoader = None
 
-# class ConfigDriver(object):
-# 	def __init__(self):
-# 		self.engine = alemiBot.config.get("lbconfig", "engine", fallback="file")
+	def load(self, data:dict):
+		self.store = _update_values(self.store, data)
 
-# 
-# 	def 
-# 
-# # Config
-# 
-# 
-# try:
-# 	data = {} # Compatibility! Load also config from old location
-# 	if os.path.isfile("plugins/lootbot/data/config.json"):
-# 		with open("plugins/lootbot/data/config.json") as f:
-# 			data = json.load(f)
-# 	else:
-# 		with open("data/lootcfg.json") as f:
-# 			data = json.load(f)
-# 	load_config(CONFIG, data)
-# except:
-# 	with open("plugins/lootbot/data/config.json", "w") as f:
-# 		json.dump(CONFIG, f)
+	async def serialize(self):
+		await self.loader.serialize(self.store)
+
+	async def unserialize(self):
+		self.store = await self.loader.unserialize()
+
+	def __getitem__(self, name:str) -> Any:
+		return self.store[name]
+
+	def __setitem__(self, name:str, value:Any):
+		self.store[name] = value
+		asyncio.create_task(self.loader.serialize(self.store)) # can't await here, do in background
+
+CONFIG = ConfigHolder()
+
+@alemiBot.on_ready()
+async def load_config(client):
+	loader = alemiBot.config.get("lbconfig", "loader", fallback="file").lower().strip()
+	if engine == "file":
+		path = alemiBot.config.get("lbconfig", "path", fallback="plugins/lootbot/data/config.json")
+		CONFIG.loader = FileLoader(path)
+	elif engine == "message":
+		CONFIG.loader = MessageLoader(client, int(alemiBot.config.get("lbconfig", "msg_id")))
+	else:
+		raise ValueError("Invalid ConfigLoader type provided. Valid are ('file', 'message')")
+	await CONFIG.unserialize()
+
