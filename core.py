@@ -98,7 +98,7 @@ async def get_loopstate(client, message):
 @report_error(logger)
 @set_offline
 async def get_config(client, message):
-	cfg = CONFIG
+	cfg = CONFIG.get()
 	text = "lcfg"
 	if len(message.command) > 0:
 		cfg = extract(cfg, message.command[0])
