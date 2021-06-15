@@ -10,8 +10,9 @@ from plugins.lootbot.tasks import si, mnu
 from plugins.lootbot.loop import LOOP, create_task
 
 def automission_check():
-	return (CONFIG["mission"]["auto"] or
-			(CONFIG["imprese"]["activity"] and
+	cfg = CONFIG.get()
+	return (cfg["mission"]["auto"] or
+			(cfg["imprese"]["activity"] and
 				("Esploratore pazzo" in LOOP.state["imprese"]["todo"] or
 				 "Che fortuna!" in LOOP.state["imprese"]["todo"] or
 				 "Evoluzione" in LOOP.state["imprese"]["todo"] or
@@ -39,12 +40,13 @@ async def main_menu_triggers(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Missione completata! Hai ottenuto:"), group=52)
 async def missione_finita(client, message):
 	await asyncio.sleep(1) # The "daily done" message comes after the "mission done" message. Wait for it to process
+	cfg = CONFIG.get()
 	rarity = re.search("rarità (?P<rarity>C|NC|R|UR|L|E)", message.text)["rarity"]
 	LOOP.state["mission"]["rarity"] = rarity
 	if automission_check():
 		LOOP.state["dungeon"]["interrupt"] = True
 		LOOP.add_task(create_task("Riavvia missione", client=client)(missione))
-	elif CONFIG["talismani"] and LOOP.state["mission"]["talisman"]:
+	elif cfg["talismani"] and LOOP.state["mission"]["talisman"]:
 		@create_task("Equipaggia Talismano Oculato", client=client)
 		async def equip_talismano_oculato(ctx):
 			await ctx.client.send_message(LOOTBOT, "Equipaggia Talismano Oculato")
@@ -69,7 +71,8 @@ async def cant_restart_mission(client, message):
 	flags=re.DOTALL
 ), group=52)
 async def avvia_e_skippa_missione(client, message):
-	if CONFIG["talismani"] and not LOOP.state["mission"]["talisman"]:
+	cfg = CONFIG.get()
+	if cfg["talismani"] and not LOOP.state["mission"]["talisman"]:
 		@create_task("Equipaggia Talismano Esploratore", client=client)
 		async def equip_talismano_esploratore(ctx):
 			await ctx.client.send_message(LOOTBOT, "Equipaggia Talismano Esploratore")
@@ -81,10 +84,10 @@ async def avvia_e_skippa_missione(client, message):
 		LOOP.state["mission"]["talisman"] = True
 	else:
 		rarity = message.matches[0]["rarity"]
-		skip_rarity = CONFIG["mission"]["rarity"].upper()
-		dont_skip = CONFIG["imprese"]["auto"] and "Avventura interminabile" in LOOP.state["imprese"]["todo"] and Rarity[rarity] >= Rarity["UR"]
-		skip = (not dont_skip and CONFIG["mission"]["skip"] and Rarity[rarity] >= Rarity[skip_rarity]
-							and LOOP.state["gemme"] != {} and LOOP.state["gemme"] > CONFIG["gem-limit"])
+		skip_rarity = cfg["mission"]["rarity"].upper()
+		dont_skip = cfg["imprese"]["auto"] and "Avventura interminabile" in LOOP.state["imprese"]["todo"] and Rarity[rarity] >= Rarity["UR"]
+		skip = (not dont_skip and cfg["mission"]["skip"] and Rarity[rarity] >= Rarity[skip_rarity]
+							and LOOP.state["gemme"] != {} and LOOP.state["gemme"] > cfg["gem-limit"])
 		@create_task("Avvia Nuova Missione", client=client, skip=skip)
 		async def start_new_mission(ctx):
 			await si(ctx)

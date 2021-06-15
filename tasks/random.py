@@ -14,7 +14,8 @@ from plugins.lootbot.tasks.missioni import missione
 # Extra estrazione
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Durante l'estrazione di Mana trovi una vena più ricca del solito!"), group=71)
 async def estrazione_extra(client, message):
-	if CONFIG["raccogli"]:
+	cfg = CONFIG.get()
+	if cfg["raccogli"]:
 		@create_task("Estrazione extra", client=client)
 		async def scava_bonus(ctx):
 			await ctx.client.send_message(LOOTBOT, "Scava")
@@ -27,7 +28,8 @@ async def estrazione_extra(client, message):
 # Extra Cariche Esplorative
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Durante l'esplorazione del Dungeon trovi una piccola boccetta"), group=71)
 async def cariche_extra(client, message):
-	if CONFIG["raccogli"]:
+	cfg = CONFIG.get()
+	if cfg["raccogli"]:
 		@create_task("Cariche extra", client=client)
 		async def cariche_bonus(ctx):
 			await ctx.client.send_message(LOOTBOT, "Ricarica")

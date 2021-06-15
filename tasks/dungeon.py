@@ -31,7 +31,7 @@ PRIORITY_RUSH = ["Stanza del Cuore e dello Spirito", "Meditazione", "Spada o Bot
 
 DIREZIONI = ["⬅️", "⬆️", "➡️"]
 
-CFG = CONFIG["dungeon"]
+CFG = CONFIG.get("dungeon")
 
 # requires client
 async def dungeon(ctx):
@@ -97,20 +97,20 @@ async def main_menu_triggers(client, message): # TODO maybe move main menu tasks
 		dung["tempo"] = match["time"]
 		if dung["wait-cariche"] == {}:
 			dung["wait-cariche"] = 0
-		if len(LOOP) < 1 and CONFIG["dungeon"]["auto"] \
+		if len(LOOP) < 1 and CFG["auto"] \
 			and ((not dung["rush"] and dung["cariche"] >= CFG["cariche"] and dung["cariche"] >= dung["wait-cariche"])
-				or (dung["rush"] and LOOP.state["me"]["hp"] > LOOP.state["me"]["maxhp"] * CONFIG["dungeon"]["hp"])) :
+				or (dung["rush"] and LOOP.state["me"]["hp"] > LOOP.state["me"]["maxhp"] * CFG["hp"])) :
 			dung["wait-cariche"] = 0
 			LOOP.add_task(create_task("Check + continue dungeon", client=client)(dungeon))
 	elif DUNGEON_COOLDOWN_CHECK.search(message.text):
-		if len(LOOP) < 1 and CONFIG["dungeon"]["start"] and (CFG["varco"] or "Avanti nel tempo" in LOOP.state["imprese"]["todo"]) \
+		if len(LOOP) < 1 and CFG["start"] and (CFG["varco"] or "Avanti nel tempo" in LOOP.state["imprese"]["todo"]) \
 		and (LOOP.state["dungeon"]["varchi"] == {} or LOOP.state["dungeon"]["varchi"] > 0) \
 		and (LOOP.state["dungeon"]["usi-varchi"] == {} or LOOP.state["dungeon"]["usi-varchi"] > 0):
 			LOOP.add_task(create_task("Check + varco dungeon", client=client)(dungeon))
 			LOOP.state["dungeon"]["cooldown"] = False
 	elif DUNGEON_RESTART.search(message.text):
 		LOOP.state["dungeon"]["cooldown"] = False
-		if len(LOOP) < 1 and CONFIG["dungeon"]["start"]:
+		if len(LOOP) < 1 and CFG["start"]:
 			LOOP.add_task(create_task("Check + restart dungeon", client=client)(dungeon))
 
 # Prova a usare sempre un varco se in cooldown se auto-varco on, al peggio torni poi al menu
@@ -223,6 +223,7 @@ async def dungeon_main_screen(client, message):
 	dung = LOOP.state["dungeon"]
 	dung["stanza"] = int(match["room"])
 	dung["totali"] = int(match["tot"])
+	cfg = CONFIG.get()
 	if match["charge"] == "∞": # Dungeon Rush!
 		dung["rush"] = True
 		dung["cariche"] = 60
@@ -269,7 +270,7 @@ async def dungeon_main_screen(client, message):
 	priorities = PRIORITY_RUSH if dung["rush"] else PRIORITY_DEFAULT
 	if CFG["mob-prio"]:
 		priorities = ["Mostro"] + priorities
-	if CONFIG["imprese"]["auto"]:
+	if cfg["imprese"]["auto"]:
 		if "Mente acuta" in LOOP.state["imprese"]["todo"]:
 			priorities = ["Stanza del Cuore e dello Spirito", "Meditazione"] + priorities
 		if "Un prezioso scambio" in LOOP.state["imprese"]["todo"]:
@@ -337,7 +338,8 @@ async def attaccalo(client, message): # Vai al combattimento
 			LOOP.add_task(start_fight, prio=True)
 
 def cast_for_impresa():
-	return CONFIG["imprese"]["auto"] and (
+	cfg = CONFIG.get()
+	return cfg["imprese"]["auto"] and (
 		"Mago da strapazzo" in LOOP.state["imprese"]["todo"] or
 		"Sprecone di mana" in LOOP.state["imprese"]["todo"] or
 		"Fuoco e fiamme" in LOOP.state["imprese"]["todo"] or
@@ -353,6 +355,7 @@ def cast_for_impresa():
 	flags=re.DOTALL
 ), group=50)
 async def dentro_al_fight(client, message): # Schermata principale
+	cfg = CONFIG.get()
 	m = message.matches[0]
 	fight = {
 		"name" : m["name"],
@@ -367,7 +370,7 @@ async def dentro_al_fight(client, message): # Schermata principale
 	LOOP.state["fight"] = fight
 
 	hp_thr = CFG["hp"] * LOOP.state["me"]["maxhp"]
-	if CONFIG["imprese"]["auto"] and CONFIG["imprese"]["activity"] \
+	if cfg["imprese"]["auto"] and cfg["imprese"]["activity"] \
 	and "Ancora qui sei?!" in LOOP.state["imprese"]["todo"]:
 		hp_thr = 0.2 * LOOP.state["me"]["maxhp"]
 	if CFG["auto"]:
@@ -462,12 +465,13 @@ Dead
 """
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non puoi entrare nel dungeon da esausto"), group=50)
 async def sono_morto_pd(client, message):
-	if CFG["auto"]:
+	cfg = CONFIG.get()
+	if cfg["dungeon"]["auto"]:
 		@create_task("Torna in Vita", client=client)
 		async def ress(ctx):
 			await ctx.client.send_message(LOOTBOT, "Torna in Vita")
 		LOOP.add_task(ress, prio=True)
-	if CONFIG["log"]["pin"]["death"]:
+	if cfg["log"]["pin"]["death"]:
 		await message.pin()
 
 BTN_CHECK = re.compile(r"Intervento Divino \((?P<n>[0-9])\)")
@@ -616,9 +620,10 @@ async def posso_di_monete(client, message):
 # Stanza piena di Polvere
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Entri in una stanza completamente piena di polvere"), group=50)
 async def stanza_di_polvere(client, message):
+	cfg = CONFIG.get()
 	if CFG["auto"]:
 		if CFG["polvere"] or LOOP.state["dungeon"]["rush"] \
-		or (CONFIG["imprese"]["auto"] and "Fissato con le pulizie" in LOOP.state["imprese"]["todo"]):
+		or (cfg["imprese"]["auto"] and "Fissato con le pulizie" in LOOP.state["imprese"]["todo"]):
 			@create_task("Raccogli polvere (dungeon)", client=client)
 			async def raccogli_polvere_stanza(ctx):
 				await ctx.client.send_message(LOOTBOT, "Raccogli")
@@ -808,12 +813,13 @@ async def bottone_corretto(client, message):
 CONCENTRAZIONI_CHECK = re.compile(r"Fin ora ti sei concentrato (?P<n>[0-9]) volte")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Raggiungi una stanza completamente trasparente, sembra quasi fluttuare nel cielo"), group=50)
 async def stanza_del_cuore_e_dello_spirito(client, message):
+	cfg = CONFIG.get()
 	if CFG["auto"]:
 		conc = 0
 		m = CONCENTRAZIONI_CHECK.search(message.text)
 		if m:
 			conc = int(m["n"])
-		if (LOOP.state["dungeon"]["rush"] and conc < 7) or conc < CFG["concentrazioni"] or (CONFIG["imprese"]["auto"] 
+		if (LOOP.state["dungeon"]["rush"] and conc < 7) or conc < CFG["concentrazioni"] or (cfg["imprese"]["auto"] 
 				and "Mente acuta" in LOOP.state["imprese"]["todo"] and conc < 1):
 			@create_task("Concentrati (dungeon)", client=client)
 			async def concentrate(ctx):
@@ -829,12 +835,13 @@ async def stanza_del_cuore_e_dello_spirito(client, message):
 MEDITAZIONI_CHECK = re.compile(r"Fin ora hai meditato (?P<n>[0-9]) volte")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Raggiungi una stanza con un'incisione profonda: Stanza della Meditazione"), group=50)
 async def stanza_della_meditazione(client, message):
+	cfg = CONFIG.get()
 	if CFG["auto"]:
 		med = 0
 		m = MEDITAZIONI_CHECK.search(message.text)
 		if m:
 			med = int(m["n"])
-		if (LOOP.state["dungeon"]["rush"] and med < 7) or med < CFG["meditazioni"] or (CONFIG["imprese"]["auto"]
+		if (LOOP.state["dungeon"]["rush"] and med < 7) or med < CFG["meditazioni"] or (cfg["imprese"]["auto"]
 				and "Mente acuta" in LOOP.state["imprese"]["todo"] and med < 1):
 			@create_task("Medita (dungeon)", client=client)
 			async def medita(ctx):
@@ -867,8 +874,9 @@ STANZE CON DAILIES
 # Brucaliffo
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Tra una fitta coltre di fumo grigio appare un maestoso brucaliffo"), group=50)
 async def regala_al_brucaliffo_per_daily(client, message):
+	cfg = CONFIG.get()
 	if CFG["auto"]:
-		if CONFIG["imprese"]["auto"] and "Io non me ne vado" in LOOP.state["imprese"]["todo"]:
+		if cfg["imprese"]["auto"] and "Io non me ne vado" in LOOP.state["imprese"]["todo"]:
 			@create_task("Accetta scambio Brucaliffo", client=client)
 			async def regala_al_brucaliffo(ctx):
 				await ctx.client.send_message(LOOTBOT, "Offri...")
@@ -893,8 +901,9 @@ ITEM_SEARCH = re.compile(r"in cambio di un particolare oggetto, in questo caso: 
 	pattern=r"Entri in una stanza completamente luccicante, quasi accecante" # Gioielliere
 ), group=50)
 async def acquista_dal_gioielliere_daily(client, message):
+	cfg = CONFIG.get()
 	if CFG["auto"]:
-		if CONFIG["imprese"]["auto"] and "Un prezioso scambio" in LOOP.state["imprese"]["todo"]:
+		if cfg["imprese"]["auto"] and "Un prezioso scambio" in LOOP.state["imprese"]["todo"]:
 			match = ITEM_SEARCH.search(message.text)
 			if match["state"] == "✅":
 				@create_task("Accetta vendita gioielliere", client=client)
@@ -912,7 +921,7 @@ async def acquista_dal_gioielliere_daily(client, message):
 				else:
 					LOOP.add_task(create_task(f"Crea {match['item']} per gioielliere",
 									 client=client, recipe=match["item"])(craft_sync))
-			elif not CONFIG["imprese"]["wait-failed"]:
+			elif not cfg["imprese"]["wait-failed"]:
 				@create_task("Ignora Gioielliere (daily ma can't craft)", client=client)
 				async def ignore_merch(ctx):
 					await ctx.client.send_message(LOOTBOT, "No")
@@ -933,8 +942,9 @@ OGGETTO_ALCHIMISTA = re.compile(r"scambieresti il tuo (?P<item>[^✅☑️]+)(?:
 	pattern=r"Non fai che un passo, una voce mite ma ferma ti paralizza"
 ), group=50)
 async def alchimista_dell_ovest_daily(client, message):
+	cfg = CONFIG.get()
 	if CFG["auto"]:
-		if CONFIG["imprese"]["auto"] and "Assetato" in LOOP.state["imprese"]["todo"]:
+		if cfg["imprese"]["auto"] and "Assetato" in LOOP.state["imprese"]["todo"]:
 			match = OGGETTO_ALCHIMISTA.search(message.text)
 			if match["state"] == "✅":
 				@create_task("Accetta offerta Alchimista", client=client)
@@ -952,7 +962,7 @@ async def alchimista_dell_ovest_daily(client, message):
 				else:
 					LOOP.add_task(create_task(f"Crea {match['item']} per alchimista",
 									 client=client, recipe=match["item"])(craft_sync))
-			elif not CONFIG["imprese"]["wait-failed"]:
+			elif not cfg["imprese"]["wait-failed"]:
 				@create_task("Ignora alchimista (can't craft)", client=client)
 				async def ignore_alch(ctx):
 					await ctx.client.send_message(LOOTBOT, "No")
@@ -970,8 +980,9 @@ async def alchimista_dell_ovest_daily(client, message):
 # Vecchina
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Aprendo la porta ti ritrovi in un ambiente aperto, con alberi e liane"), group=50)
 async def stanza_con_vecchia_signora(client, message):
+	cfg = CONFIG.get()
 	if CFG["auto"]:
-		if CONFIG["imprese"]["auto"] and "Assetato" in LOOP.state["imprese"]["todo"]:
+		if cfg["imprese"]["auto"] and "Assetato" in LOOP.state["imprese"]["todo"]:
 			@create_task("Segui Vecchina (daily)", client=client)
 			async def ignore_merch(ctx):
 				await ctx.client.send_message(LOOTBOT, "Segui la Vecchia")
@@ -992,9 +1003,10 @@ OGGETTO_DRACONICO = re.compile(r"fornisce oggetti utili al proprio drago in camb
 	pattern=r"Entri in una stanza che non ha affatto le sembianze di una stanza, piuttosto un grosso parco" # Mercante Draconico
 ), group=50)
 async def acquista_draconico_se_daily(client, message):
+	cfg = CONFIG.get()
 	if CFG["auto"]:
 		match = OGGETTO_DRACONICO.search(message.text)
-		if CONFIG["imprese"]["auto"] and "Scambio draconico" in LOOP.state["imprese"]["todo"] \
+		if cfg["imprese"]["auto"] and "Scambio draconico" in LOOP.state["imprese"]["todo"] \
 		and match and match["state"] == "✅":
 			@create_task("Accetta offerta Mercante Draconico", client=client)
 			async def accept_drac(ctx):
@@ -1013,8 +1025,9 @@ async def acquista_draconico_se_daily(client, message):
 # Specchio
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Entri in una stanza con un piccolo specchio al centro. Ti avvicini"), group=50)
 async def stanza_con_specchio_magico(client, message):
+	cfg = CONFIG.get()
 	if CFG["auto"]:
-		if CONFIG["imprese"]["auto"] and "Fissato con le pulizie" in LOOP.state["imprese"]["todo"]:
+		if cfg["imprese"]["auto"] and "Fissato con le pulizie" in LOOP.state["imprese"]["todo"]:
 			@create_task("Tocca lo specchio (daily)", client=client)
 			async def ignore_merch(ctx):
 				await ctx.client.send_message(LOOTBOT, "Tocchi lo specchio")
@@ -1048,9 +1061,10 @@ async def interagisci_solo_se_daily(client, message):
 	pattern=r"Al centro della stanza vedi un signore anziano con gli occhi sbarrati"
 ), group=50)
 async def vecchio_occhi_sbarrati(client, message):
+	cfg = CONFIG.get()
 	if CFG["auto"]:
 		kb = message.reply_markup.keyboard
-		if CONFIG["imprese"]["auto"] and "Toc toc" in LOOP.state["imprese"]["todo"]:
+		if cfg["imprese"]["auto"] and "Toc toc" in LOOP.state["imprese"]["todo"]:
 			@create_task("Accetta trade chiavi", client=client, txt=kb[0][0])
 			async def dai_daily_vecchio(ctx):
 				await ctx.client.send_message(LOOTBOT, ctx.txt)

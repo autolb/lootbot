@@ -1,19 +1,22 @@
 import asyncio
 import random
 import traceback
+import logging
 import json
-import os # Temporary
+import os
 
 from enum import Enum
 
+from bot import alemiBot
+
 # ids
-LOOTBOT = 171514820
-CRAFTLOOTBOT = 280391978
-LOOTPLUSBOT = 42636063
-MAPMATCHERBOT = 1541517339
+LOOTBOT = "lootgamebot"
+CRAFTLOOTBOT = "craftlootbot"
+LOOTPLUSBOT = "lootplusbot"
+MAPMATCHERBOT = "MapMatcher_bot"
 
 # Config
-CONFIG = {
+DEFAULTS = {
 	"gem-limit" : 50,		# If you have less gems than this, stops using them
 	"sync" : {				# Fetch user info, very much still TODO
 		"auto" : False,			# Do it automatically
@@ -164,28 +167,92 @@ CONFIG = {
 	"night" : False,		# no tasks can be added to the loop at night
 }
 
-def load_config(cfg, src):
+def _update_values(cfg:dict, src:dict) -> dict:
 	if type(cfg) is not dict: # this is a config value, replace
 		return src
 	if type(src) is not dict: # nothing more to load
 		return cfg
 	for key in cfg:
 		if key in src:
-			cfg[key] = load_config(cfg[key], src[key])
+			cfg[key] = _update_values(cfg[key], src[key])
 	return cfg
 
-try:
-	data = {} # Compatibility! Load also config from old location
-	if os.path.isfile("plugins/lootbot/data/config.json"):
-		with open("plugins/lootbot/data/config.json") as f:
-			data = json.load(f)
+class ConfigLoader:
+	async def unserialize(self) -> dict:
+		raise NotImplementedError
+
+	async def serialize(self, data:dict) -> bool:
+		raise NotImplementedError
+	
+class FileLoader(ConfigLoader):
+	def __init__(self, path:str):
+		self.path = path
+
+	async def userialize(self) -> dict:
+		if not os.path.isfile(self.path):
+			return {}
+		with open(self.path) as f:
+			return json.load(f)
+
+	async def serialize(self, data:dict) -> bool:
+		with open(self.path, "w") as f:
+			json.dump(data, f)
+		return True
+
+class MessageLoader(ConfigLoader):
+	def __init__(self, client, msg_id:int):
+		self.msg_id = msg_id
+		self.client = client
+
+	async def unserialize(self) -> dict:
+		msg = await self.client.get_messages("me", self.msg_id)
+		if msg.empty:
+			return {}
+		return json.loads(msg.text)
+
+	async def serialize(self, data:dict) -> bool:
+		text = json.dumps(data, default=str)
+		await self.client.edit_message_text("me", self.msg_id, text, parse_mode=None)
+		return True
+
+class ConfigHolder:
+	def __init__(self):
+		self.store : dict = DEFAULTS
+		self.loader : ConfigLoader = None
+
+	def update(self, data:dict):
+		self.store = _update_values(self.store, data)
+
+	def get(self, section:str = '') -> dict:
+		if section in self.store:
+			return self.store[section]
+		return self.store
+
+	async def serialize(self):
+		await self.loader.serialize(self.store)
+
+	async def unserialize(self):
+		self.update(await self.loader.unserialize())
+
+	def __str__(self) -> str:
+		return str(self.store)
+
+CONFIG = ConfigHolder()
+
+@alemiBot.on_ready()
+async def load_config(client):
+	loader = alemiBot.config.get("lbconfig", "loader", fallback="file").lower().strip()
+	if engine == "file":
+		path = alemiBot.config.get("lbconfig", "path", fallback="plugins/lootbot/data/config.json")
+		CONFIG.loader = FileLoader(path)
+	elif engine == "message":
+		CONFIG.loader = MessageLoader(client, int(alemiBot.config.get("lbconfig", "msg_id")))
 	else:
-		with open("data/lootcfg.json") as f:
-			data = json.load(f)
-	load_config(CONFIG, data)
-except:
-	with open("plugins/lootbot/data/config.json", "w") as f:
-		json.dump(CONFIG, f)
+		logging.error("Invalid ConfigLoader type provided, defaulting to 'file'. Valid are ('file', 'message')")
+		path = alemiBot.config.get("lbconfig", "path", fallback="plugins/lootbot/data/config.json")
+		CONFIG.loader = FileLoader(path)
+	await CONFIG.unserialize()
+
 
 class MapTile(Enum):
 	scrigno = "💰"
@@ -229,7 +296,7 @@ class Rarity(Enum):
 	def __ne__(self, other):
 		return self.value != other.value
 
-WAIT = CONFIG["wait"]
+WAIT = CONFIG.get("wait")
 # Global utilities
 async def random_wait(n=1):
 	for _ in range(n):

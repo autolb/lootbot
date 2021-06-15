@@ -16,13 +16,14 @@ from plugins.lootbot.loop import LOOP, create_task
 TIERS = ["Epico", "Leggendario", "di Diamante", "Prezioso", "di Ferro", "di Legno"]
 @alemiBot.on_message(is_superuser & filterCommand(["forzieri", "lchest", "lch"], list(alemiBot.prefixes)))
 async def auto_buy_chests(client, message):
+	cfg = CONFIG.get()
 	LOOP.state["auto-chest"] = True
 	for tier in TIERS:
 		@create_task(f"Compra Scrigni {tier}", client=client, tier=tier)
 		async def compra_scrigno_tier(ctx):
 			await ctx.client.send_message(LOOTBOT, f"compra Scrigno {ctx.tier}")
 			await edit_or_reply(ctx.message, f"` → compra Scrigno {ctx.tier}")
-			await asyncio.sleep(CONFIG["wait"]["forzieri-cd"])
+			await asyncio.sleep(cfg["wait"]["forzieri-cd"])
 		LOOP.add_task(compra_scrigno_tier)
 	LOOP.add_task(create_task("Menu", client=client)(mnu))
 	@create_task(f"Termina acquisti forzieri")

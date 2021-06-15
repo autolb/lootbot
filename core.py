@@ -29,12 +29,13 @@ TASK_INTERRUPT = False
 @report_error(logger)
 @set_offline
 async def toggle_night(client, message):
-	if type(CONFIG["night"]) is not bool:
-		CONFIG["night"] = False
-	CONFIG["night"] = not CONFIG["night"]
-	with open("plugins/lootbot/data/config.json", "w") as f:
-		json.dump(CONFIG, f) # serialize after each change
-	await edit_or_reply(message, f"` → ` Night mode [`{'ON' if CONFIG['night'] else 'OFF'}`]")
+	cfg = CONFIG.get()
+	if type(cfg["night"]) is not bool:
+		cfg["night"] = False
+	cfg["night"] = not cfg["night"]
+	CONFIG.update(cfg)
+	await CONFIG.serialize()
+	await edit_or_reply(message, f"` → ` Night mode [`{'ON' if cfg['night'] else 'OFF'}`]")
 
 @alemiBot.on_message(is_superuser & filterCommand(["lfriend", "lfriends"], list(alemiBot.prefixes)))
 @report_error(logger)
@@ -43,8 +44,7 @@ async def sync_friends_command(client, message):
 	out = ""
 	if len(message.command.arg) > 0:
 		CONFIG["sync"]["friends"]["url"] = message.command.arg[0]
-		with open("plugins/lootbot/data/config.json", "w") as f:
-			json.dump(CONFIG, f) # serialize after each change
+				await CONFIG.serialize()
 		out += f"` → lb.sync.friends.url` : --{message.command.arg[0]}--\n" 
 	data = requests.get(CONFIG["sync"]["friends"]["url"]).json()
 	with open("plugins/lootbot/data/friends.json", "w") as f:
@@ -110,7 +110,8 @@ async def get_config(client, message):
 async def set_config(client, message):
 	if len(message.command) < 1:
 		return
-	curr = LOOP.state if message.command["-state"] else CONFIG
+	edit_state = bool(message.command["-state"])
+	data = LOOP.state if edit_state else CONFIG.get()
 	s = message.command[0].split(".")
 	force = message.command["-f"]
 	key = s.pop(-1)
@@ -129,6 +130,7 @@ async def set_config(client, message):
 		except:
 			pass
 	logger.info(f"Setting \'{'.'.join(pre)}.{key}\' to {val}")
+	curr = data
 	for k in pre:
 		if k not in curr:
 			return await edit_or_reply(message, f"`[!] → ` No such setting")
@@ -143,8 +145,9 @@ async def set_config(client, message):
 		if type(val) is list and len(val) != len(curr[key]):
 			return await edit_or_reply(message, f"`[!] → ` Not enough elements (**{len(val)}**, expected **{len(curr[key])}**)")
 	curr[key] = val
-	with open("plugins/lootbot/data/config.json", "w") as f:
-		json.dump(CONFIG, f) # serialize after each change
+	if not edit_state:
+		CONFIG.update(data)
+		await CONFIG.serialize()
 	await edit_or_reply(message, f"` → ` {'**[F]**' if force else ''} `{'.'.join(pre)}.{key}` : --{val}--")
 
 @alemiBot.on_message(is_superuser & filterCommand(["ltask", "task", "tasks"], list(alemiBot.prefixes), options={

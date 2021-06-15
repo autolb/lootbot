@@ -10,7 +10,7 @@ from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG
 from plugins.lootbot.tasks import si, mnu, rifugio
 from plugins.lootbot.loop import LOOP, create_task
 
-CFG = CONFIG["ispezione"]
+CFG = CONFIG.get("ispezione")
 
 def score(numbers):
 	assert len(numbers) == 5
@@ -96,12 +96,13 @@ MATCHMAKING = re.compile(r"con abilità (?P<skill>[0-9\.]+)\.\nAlloggia in un (?
 						 r"\((?P<drakelvl>[0-9]+)\) sorveglia la sua entrata\.")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Stai per inviare uno gnomo servitore al rifugio"), group=53)
 async def scegli_gnomo(client, message):
+	cfg = CONFIG.get()
 	if CFG["auto"]:
 		match = MATCHMAKING.search(message.text)
 		skill = int(match["skill"].replace(".", ""))
 		drake = int(match["drakelvl"])
 		gnomo = "Occhiofurbo"
-		if CONFIG["imprese"]["auto"]:
+		if cfg["imprese"]["auto"]:
 			if "Il mio esercito" in LOOP.state["imprese"]["todo"]:
 				gnomo = "Piedelesto"
 			elif "Ispezione modesta" in LOOP.state["imprese"]["todo"]:
@@ -156,6 +157,7 @@ flags=re.DOTALL), group=53)
 async def game_event(client, message):
 	if not CFG["auto"]:
 		return
+	cfg = CONFIG.get()
 	m = message.matches[0]
 	attempts = int(m["left"])
 	if attempts == 0:
@@ -177,7 +179,7 @@ async def game_event(client, message):
 		for i, r in zip(range(1, len(rune) + 1), rune):
 			if r != keep:
 				change.append(str(i))
-	if len(change) == 0 or (CONFIG["imprese"]["auto"] and
+	if len(change) == 0 or (cfg["imprese"]["auto"] and
 			"Fortunello" in LOOP.state["imprese"]["todo"]):
 		@create_task("Conferma combinazione", client=client)
 		async def accept_rune(ctx):

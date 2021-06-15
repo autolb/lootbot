@@ -18,7 +18,8 @@ from plugins.lootbot.tasks.missioni import missione
 
 @alemiBot.on_message(group=42069)
 async def sync_state(client, message):
-	if not CONFIG["sync"]["auto"]:
+	cfg = CONFIG.get()
+	if not cfg["sync"]["auto"]:
 		return
 	if LOOP.state["last-sync"] == {} \
 	or datetime.fromtimestamp(message.date).date() > LOOP.state["last-sync"]:
@@ -35,8 +36,8 @@ async def sync_state(client, message):
 		LOOP.state["smuggler"]["try-craft-once"] = False
 		LOOP.state["smuggler"]["cant-craft"] = False
 		LOOP.state["imprese"]["new"] = True
-		if CONFIG["sync"]["friends"]["auto"]:
-			r = requests.get(CONFIG["sync"]["friends"]["url"])
+		if cfg["sync"]["friends"]["auto"]:
+			r = requests.get(cfg["sync"]["friends"]["url"])
 			with open("plugins/lootbot/data/friends.json", "w") as f:
 				json.dump(r.json(), f)
 		with open("plugins/lootbot/data/friends.json") as f:
@@ -125,9 +126,10 @@ MESSAGGIO_CHECK = re.compile(r"Portando con sè un messaggio su una pergamena: (
 	pattern=r"Le pattuglie intorno al villaggio ci hanno avvisato che (?P<name>.+) ha spiato il tuo rifugio!"
 ), group=70)
 async def spiata(client, message):
-	if CONFIG["log"]["pin"]["spy"]:
+	cfg = CONFIG.get()
+	if cfg["log"]["pin"]["spy"]:
 		await message.pin()
-	if CONFIG["log"]["msg"]["spy"] and CONFIG["log"]["group"]:
+	if cfg["log"]["msg"]["spy"] and cfg["log"]["group"]:
 		name = message.matches[0]["name"]
 		if name != "qualcuno":
 			name = "@" + name
@@ -135,11 +137,12 @@ async def spiata(client, message):
 		match = MESSAGGIO_CHECK.search(message.text)
 		if match:
 			text += "\n` → ` " + match["msg"]
-		await client.send_message(CONFIG["log"]["group"], text)
+		await client.send_message(cfg["log"]["group"], text)
 	
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Messaggio da"), group=70)
 async def messaggio_diretto(client, message):
-	if CONFIG["log"]["pin"]["dm"]:
+	cfg = CONFIG.get()
+	if cfg["log"]["pin"]["dm"]:
 		await message.pin()
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
@@ -148,5 +151,6 @@ async def messaggio_diretto(client, message):
 			r"Le miniere sono state chiuse, hai ricevuto"
 ), group=70)
 async def hai_ricevuto(client, message):
-	if CONFIG["log"]["pin"]["reward"]:
+	cfg = CONFIG.get()
+	if cfg["log"]["pin"]["reward"]:
 		await message.pin()

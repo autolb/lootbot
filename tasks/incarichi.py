@@ -8,7 +8,7 @@ from bot import alemiBot
 from plugins.lootbot.common import LOOTBOT, LOOTPLUSBOT, random_wait, CONFIG
 from plugins.lootbot.loop import LOOP, create_task
 
-CFG = CONFIG["incarichi"]
+CFG = CONFIG.get("incarichi")
 
 CHOICES = ["In groppa al drago", "Uno sopra l'altro", "La ricerca di tanto cibo", "Un gruppo di Cerbrutti",
 		   "Li attirate con un'esca", "Ne assaggiate per dimostrare la qualità", "Andate in Piazza",

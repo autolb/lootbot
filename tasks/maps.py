@@ -27,7 +27,7 @@ TILES = {
 	"PRIORITY" : [ "💰", "🔩", "✨", "🔋", "💥", "◼️", "💊", "💸", "🔁", "💨", "◻️", "👣", "🕳", "⚡️", "☠️"]
 }
 
-CFG = CONFIG["mappe"]
+CFG = CONFIG.get("mappe")
 
 def update_board(old, new):
 	"""Changes unexplored tiles with explored ones, remembering progress"""
@@ -43,7 +43,7 @@ def dist(player, loc): # This is not an euclidean distance! It's discrete
 	return abs(player[0] - loc[0]) + abs(player[1] - loc[1])
 
 def b_dist(pl, loc): # biased towards the center
-	return dist(pl, loc) + (dist((4, 4), loc) * CONFIG["mappe"]["ai"]["center-bias"])
+	return dist(pl, loc) + (dist((4, 4), loc) * CFG["ai"]["center-bias"])
 
 def seek_player(board):
 	for i, row in zip(range(len(board)), board):
@@ -175,7 +175,8 @@ async def show_map_command(client, message):
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La partita (?:di allenamento |)è terminata!"), group=45)
 async def on_map_finished(client, message):
-	if CONFIG["log"]["pin"]["map"]:
+	cfg = CONFIG.get()
+	if cfg["log"]["pin"]["map"]:
 		await message.pin()
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.me & filters.regex(pattern=r"Allenamento 🥋|Accedi alla Lobby 🏹"), group=45)
