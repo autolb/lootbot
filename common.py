@@ -188,7 +188,7 @@ class FileLoader(ConfigLoader):
 	def __init__(self, path:str):
 		self.path = path
 
-	async def userialize(self) -> dict:
+	async def unserialize(self) -> dict:
 		if not os.path.isfile(self.path):
 			return {}
 		with open(self.path) as f:
@@ -242,6 +242,7 @@ CONFIG = ConfigHolder()
 @alemiBot.on_ready()
 async def load_config(client):
 	loader = alemiBot.config.get("lbconfig", "loader", fallback="file").lower().strip()
+	logging.info("Loading config with loader '%s'", loader)
 	if loader == "file":
 		path = alemiBot.config.get("lbconfig", "path", fallback="plugins/lootbot/data/config.json")
 		CONFIG.loader = FileLoader(path)
