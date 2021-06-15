@@ -42,11 +42,13 @@ async def toggle_night(client, message):
 @set_offline
 async def sync_friends_command(client, message):
 	out = ""
+	cfg = CONFIG.get()
 	if len(message.command.arg) > 0:
-		CONFIG["sync"]["friends"]["url"] = message.command.arg[0]
-				await CONFIG.serialize()
+		cfg["sync"]["friends"]["url"] = message.command.arg[0]
+		CONFIG.update(cfg)
+		await CONFIG.serialize()
 		out += f"` → lb.sync.friends.url` : --{message.command.arg[0]}--\n" 
-	data = requests.get(CONFIG["sync"]["friends"]["url"]).json()
+	data = requests.get(cfg["sync"]["friends"]["url"]).json()
 	with open("plugins/lootbot/data/friends.json", "w") as f:
 		json.dump(data, f)
 	LOOP.state["friends"] = data
