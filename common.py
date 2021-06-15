@@ -242,10 +242,10 @@ CONFIG = ConfigHolder()
 @alemiBot.on_ready()
 async def load_config(client):
 	loader = alemiBot.config.get("lbconfig", "loader", fallback="file").lower().strip()
-	if engine == "file":
+	if loader == "file":
 		path = alemiBot.config.get("lbconfig", "path", fallback="plugins/lootbot/data/config.json")
 		CONFIG.loader = FileLoader(path)
-	elif engine == "message":
+	elif loader == "message":
 		CONFIG.loader = MessageLoader(client, int(alemiBot.config.get("lbconfig", "msg_id")))
 	else:
 		logging.error("Invalid ConfigLoader type provided, defaulting to 'file'. Valid are ('file', 'message')")
