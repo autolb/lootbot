@@ -21,24 +21,38 @@ Questo e' un plugin per il mio userbot, ([alemibot](https://github.com/alemiglia
 
 # Installazione
 ## Heroku
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/alemidev/alemibot/tree/heroku&env[PLUGINS]=autolb/lootbot)
+### TLDR
+* Vai su [my.telegram.org](https://my.telegram.org/) e ottieni i tuoi API_ID e API_HASH
+* Vai [qui](https://alemi.dev/pyrosess) per generare una string session
+* Premi [qui](https://heroku.com/deploy?template=https://github.com/alemidev/alemibot/tree/heroku&env[PLUGINS]=autolb/lootbot) per caricare il progetto su heroku
+* Nel pannello delle Risorse, attiva il dyno gratis per il bot
+Done! Configura il bot col comando `.lcfg`.
+
+### Piu` spiegazioni
 Heroku e' una piattaforma che affitta a developers e aziende piccoli containers (docker) per eseguire applicazioni : i dynos.
 Heroku offre dyno con forti limiti gratis, ma per eseguire un bot di telegram le poche risorse offerte sono comunque sufficienti.
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/alemidev/alemibot/tree/heroku&env[PLUGINS]=autolb/lootbot)
+Usa [questo sito](https://alemi.dev/pyrosess) per generare una sessione.
+Dovrai inserire API\_ID e API\_HASH (puoi cercarne di default o recuperare i tuoi su [my.telegram.org](https://my.telegram.org/)) e il tuo numero di telefono, e riportare il codice che ricevi.
+Se non ti fidi del sito proposto, puoi utilizzare [querto replit](https://replit.com/@dashezup/generate-pyrogram-session-string) (di cui il codice e' open source. Il metodo e' tuttavia piu' lento.)
 
-Usa questo [link](https://replit.com/@dashezup/generate-pyrogram-session-string) per generare una sessione.
-Dovrai inserire API\_ID e API\_HASH (puoi cercarne di default o recuperare i tuoi su [my.telegram.org](https://my.telegram.org/)) e il tuo numero di telefono, 
-e riportare il codice che ricevi. (Il sito e' `repl`, che esegue frammenti di codice in sandox online. 
-Puoi controllare il codice che sta venendo eseguito sulla scheda "Code". E' uno script minimo con l'unico scopo di generarti una stringa di sessione)
+Inserisci quindi la stringa di sessione (che hai ottenuto nei tuoi messaggi salvati), API\_ID e API\_HASH nei campi sulla pagina di Heroku.
 
-Inserisci quindi la stringa che hai ottenuto nei salvati, API\_ID e API\_HASH nei campi sulla pagina di Heroku e premi "deploy"
+Per fare in modo che il config non venga resettato quotidianamente, devi configurare un messaggio come "storage" per il config. Inserisci nel campo `EXTRA_CONFIG` di heroku:
+```
+[lbconfig]
+loader = message
+msg_id = <id_messaggio_da_usare>
+```
+sostituisci `<id_messaggio_da_usare>` con l'id del messaggio che vorrai usare per tenere il tuo config (deve essere nei tuoi messaggi salvati o in un canale di cui sei admin! Il messaggio con la stringa di sessione generata sul mio sito riporta l'id del messaggio all'inizio, e' possibile utilizzare quel messaggio come storage)
 
-Una volta finito di creare l'app, dovrai attivarla: vai su "Manage app", poi sulla tab "Resources" modifica lo stato dell'unico 
-worker da spento ad acceso (la spunta, prima il tasto 'modifica' viola)
+Infine, premi "deploy" e attendi che heroku prepari il tuo container.
 
-Il tuo bot e' pronto e partito! Nei tuoi messaggi salvati, controlla il tuo config con `/lcfg [<sub>]` e cambia i parametri che vuoi con `/lset <param> <value>`
+Una volta finito di creare l'app, dovrai attivarla: vai su "Manage app", poi sulla tab "Resources" modifica lo stato dell'unico worker da spento ad acceso (prima premi il tasto 'modifica' viola, poi clicca sul bottone)
 
-Heroku riavvia il tuo dyno ogni 24h, resettanto percio' il tuo config. (stiamo reworkando il caricamento del config per evitare questo, stay tuned)
+Il tuo bot e' pronto e partito! Nei tuoi messaggi salvati, controlla il tuo config con `.lcfg` e inizia a configurarlo come piu' ti piace!
+
 ## Manuale
 E' necessario prima di tutto installare [alemibot](https://github.com/alemigliardi/alemibot), segui la guida per installare `alemibot`.
 
