@@ -86,7 +86,7 @@ class TaskLoop(object):
 				break
 
 	def add_task(self, task, prio=False):
-		if CONFIG["night"]:
+		if CONFIG()["night"]:
 			logger.warning(f"[LB] Discarding task \'{task.ctx.name}\' due to Night Mode")
 			return # prevent adding (and starting) tasks if in night mode
 		task.ctx.state = self.state

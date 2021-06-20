@@ -1,4 +1,5 @@
 import re
+import asyncio
 
 from pyrogram import filters
 
@@ -8,7 +9,7 @@ from util.command import filterCommand
 from util.permission import is_superuser
 from util.message import edit_or_reply
 
-from plugins.lootbot.common import LOOTBOT, random_wait
+from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG
 from plugins.lootbot.tasks import si, mnu, emporio
 from plugins.lootbot.loop import LOOP, create_task
 
@@ -22,7 +23,7 @@ async def auto_buy_chests(client, message):
 		async def compra_scrigno_tier(ctx):
 			await ctx.client.send_message(LOOTBOT, f"compra Scrigno {ctx.tier}")
 			await edit_or_reply(ctx.message, f"` → compra Scrigno {ctx.tier}")
-			await asyncio.sleep(CONFIG["wait"]["forzieri-cd"])
+			await asyncio.sleep(CONFIG()["wait"]["forzieri-cd"])
 		LOOP.add_task(compra_scrigno_tier)
 	LOOP.add_task(create_task("Menu", client=client)(mnu))
 	@create_task(f"Termina acquisti forzieri")

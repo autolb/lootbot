@@ -45,11 +45,11 @@ async def sync_inventory(ctx):
 	await random_wait()
 	ctx.state["craft"]["fwd"] = True
 	await ctx.client.send_message(LOOTBOT, "zaino completo")
-	await asyncio.sleep(CONFIG["wait"]["forward-cd"]) # give some time to other handlers to handle this
+	await asyncio.sleep(CONFIG()["wait"]["forward-cd"]) # give some time to other handlers to handle this
 	ctx.state["craft"]["fwd"] = False
 	await ctx.client.send_message(LOOTBOT, "Torna al menu")
 	await ctx.client.send_message(CRAFTLOOTBOT, "Salva")
-	await asyncio.sleep(CONFIG["wait"]["forward-cd"]) # Give some time to CLB to save backpack
+	await asyncio.sleep(CONFIG()["wait"]["forward-cd"]) # Give some time to CLB to save backpack
 
 # Requires client, item
 async def craft_quick(ctx): # This will be nicer once we don't need CraftLootBot anymore
@@ -132,7 +132,7 @@ async def craft_confirmation(client, message):
 				tot = LOOP.state["craft"]["total"]
 				await edit_or_reply(CRAFT_MSG, f"<code>[!] → </code> <b>Failed</b> <b>{curr}</b> [<code>{i}/{tot}</code>]", parse_mode="html")
 				CRAFT_MSG = None
-			if CONFIG["log"]["pin"]["craft"]:
+			if CONFIG()["log"]["pin"]["craft"]:
 				await message.pin()
 		else:
 			LOOP.add_task(create_task(f"Procedi - {curr}", client=client)(procedi), prio=True)
@@ -147,6 +147,7 @@ async def craft_confirmation(client, message):
 				LOOP.add_task(create_task("Craft finished", client=client)(mnu))
 				if CRAFT_MSG:
 					tot = LOOP.state["craft"]["total"]
+					i = LOOP.state["craft"]["index"]
 					await edit_or_reply(CRAFT_MSG,
 							f"<code> → </code> <b>{curr}</b> [<code>{i}/{tot}</code>]\n<code>→ </code> Done (<code>{tot}</code> crafted)",
 							parse_mode="html")

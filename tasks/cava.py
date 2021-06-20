@@ -10,7 +10,7 @@ from plugins.lootbot.tasks import si, mnu
 from plugins.lootbot.loop import LOOP, create_task
 
 def autocava_check():
-	return (CONFIG["cava"]["auto"] or (CONFIG["imprese"]["activity"] and
+	return (CONFIG()["cava"]["auto"] or (CONFIG()["imprese"]["activity"] and
 		("Evoluzione draconica" in LOOP.state["imprese"]["todo"]
 		or "Quanta fretta" in LOOP.state["imprese"]["todo"]
 		or "Minatore costante" in LOOP.state["imprese"]["todo"]
@@ -37,9 +37,9 @@ async def main_menu_triggers(client, message):
 async def riavvia_cava(client, message):
 	await asyncio.sleep(1) # The "daily done" msg comes after, so let's give lootbot 1 sec to send it
 	LOOP.state["dungeon"]["interrupt"] = True
-	if (CONFIG["cava"]["auto"] or autocava_check()):
+	if (CONFIG()["cava"]["auto"] or autocava_check()):
 		LOOP.add_task(create_task("Riavvia cava", client=client)(esplorazioni))
-	elif CONFIG["talismani"]:
+	elif CONFIG()["talismani"]:
 		@create_task("Equipaggia Talismano Oculato", client=client)
 		async def equip_talismano_oculato(ctx):
 			await ctx.client.send_message(LOOTBOT, "Equipaggia Talismano Oculato")
@@ -56,12 +56,12 @@ async def cant_restart_cava(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & autocava & filters.regex(pattern=r"Seleziona il viaggio o la cava da esplorare"), group=55)
 async def scegli_cava(client, message):
 	kb = [ btn for sub in message.reply_markup.keyboard for btn in sub ]
-	dest = CONFIG["cava"]["name"]
+	dest = CONFIG()["cava"]["name"]
 	for btn in kb:
 		if dest.lower() in btn.lower():
 			dest = btn
 			break
-	@create_task(f"Scegli cava {CONFIG['cava']['name']}", client=client, dest=dest)
+	@create_task(f"Scegli cava {CONFIG()['cava']['name']}", client=client, dest=dest)
 	async def start_cava(ctx):
 		await ctx.client.send_message(LOOTBOT, ctx.dest)
 	LOOP.add_task(start_cava, prio=True)
@@ -74,7 +74,7 @@ async def check_amuleto(client, message):
 	if m:
 		LOOP.state["esplorazioni"]["ritorni"]["cava"] = int(m["cave"])
 		LOOP.state["esplorazioni"]["ritorni"]["viaggio"] = int(m["viaggi"])
-	if CONFIG["talismani"] and TALISMAN_CHECK.search(message.text)["status"] == "❌":
+	if CONFIG()["talismani"] and TALISMAN_CHECK.search(message.text)["status"] == "❌":
 		@create_task("Equipaggia Talismano Famelico", client=client)
 		async def equip_talismano_famelico(ctx):
 			await ctx.client.send_message(LOOTBOT, "Equipaggia Talismano Famelico")
@@ -92,10 +92,10 @@ DIMEZZATO_CHECK = re.compile(r"dimezzat.!")
 async def gemma_la_cava(client, message): # TODO allow to retreat from exploration rather than using gems!
 	loc = "cava" if message.matches[0]["loc"] == "un'esplorazione" else "viaggio"
 	dimezzato = DIMEZZATO_CHECK.search(message.text)
-	skip = (not dimezzato or CONFIG["cava"]["halvedskip"]) and CONFIG["cava"]["skip"] and LOOP.state["gemme"] != {} \
-						and LOOP.state["gemme"] > CONFIG["gem-limit"]
+	skip = (not dimezzato or CONFIG()["cava"]["halvedskip"]) and CONFIG()["cava"]["skip"] and LOOP.state["gemme"] != {} \
+						and LOOP.state["gemme"] > CONFIG()["gem-limit"]
 	ritorna = "Indecisione" in LOOP.state["imprese"]["todo"] or (not dimezzato and
-				(CONFIG["cava"]["ritorna"] or "Quanta fretta" in LOOP.state["imprese"]["todo"]) 
+				(CONFIG()["cava"]["ritorna"] or "Quanta fretta" in LOOP.state["imprese"]["todo"]) 
 					and LOOP.state["esplorazioni"]["ritorni"][loc] > 0)
 	if ritorna:
 		@create_task("Ritorna dall'esplorazione", client=client)
@@ -130,7 +130,7 @@ async def aggiorna_numero_gemme(client, message):
 
 	curr_gem = int(message.matches[0]["gemme"].replace(".", ""))
 
-	if CONFIG["cava"]["skip"] and curr_gem - cost > CONFIG["gem-limit"]:
+	if CONFIG()["cava"]["skip"] and curr_gem - cost > CONFIG()["gem-limit"]:
 		@create_task("Conferma di gemmare la cava", client=client)
 		async def confirm_gemmare_cava(ctx):
 			await si(ctx)
