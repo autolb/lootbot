@@ -26,8 +26,7 @@ DAILY_CHECK = re.compile(r"(?:Imprese:|(?P<name>.*) \((?P<curr>[0-9]+)\/(?P<top>
 @alemiBot.on_message(filters.chat(LOOTBOT) &
 	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=30) # Do this before dungeons or inspections!
 async def main_menu_triggers(client, message):
-	cfg = CONFIG.get()
-	if len(LOOP) < 1 and cfg["imprese"]["auto"] and LOOP.state["imprese"]["new"]:
+	if len(LOOP) < 1 and CONFIG()["imprese"]["auto"] and LOOP.state["imprese"]["new"]:
 		LOOP.state["imprese"]["new"] = False
 		match = DAILY_CHECK.search(message.text)
 		if match and match["state"] != "🏁":
@@ -40,11 +39,10 @@ async def main_menu_triggers(client, message):
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai completato l'impresa giornaliera (?P<name>.*) e hai"), group=58)
 async def on_daily_completed(client, message):
-	cfg = CONFIG.get()
 	name = message.matches[0]["name"]
 	if name in LOOP.state["imprese"]["todo"]:
 		LOOP.state["imprese"]["todo"].remove(name)
-	if cfg["imprese"]["single"] and name == "Arte della guerra":  # reequip what you had
+	if CONFIG()["imprese"]["single"] and name == "Arte della guerra":  # reequip what you had
 		@create_task("Rivestiti", client=client)
 		async def dress_up(ctx):
 			for item in ctx.state["imprese"]["prev-equip"]:
@@ -70,7 +68,6 @@ async def no_dailies_on_weekend(client, message):
 ), group=58)
 async def salva_imprese_di_oggi(client, message):
 	match = message.matches[0].groupdict()
-	cfg = CONFIG.get()
 	LOOP.state["imprese"]["giornaliere"] = [
 		{
 			"title" : match["title1"],
@@ -100,7 +97,7 @@ async def salva_imprese_di_oggi(client, message):
 	for im in LOOP.state["imprese"]["giornaliere"]:
 		if not im["done"]:
 			LOOP.state["imprese"]["todo"].append(im["title"])
-	if cfg["imprese"]["single"]:
+	if CONFIG()["imprese"]["single"]:
 		if "Armaiolo monotono" in LOOP.state["imprese"]["todo"]:
 			n = 50
 			for d in LOOP.state["imprese"]["giornaliere"]:
@@ -194,7 +191,6 @@ async def buy_cheapest_pack_from_mercante_pazzo(client, message):
 ), group=58)
 async def got_naked_message(client, message):
 	"""This is kind of an ad-hoc hook for "Arte della Guerra" """
-	cfg = CONFIG.get()
 	if "Arte della guerra" in LOOP.state["imprese"]["todo"]:
 		LOOP.state["imprese"]["prev-equip"] = [
 			message.matches[0]["arma"],
@@ -202,7 +198,7 @@ async def got_naked_message(client, message):
 			message.matches[0]["scudo"]
 		]
 		LOOP.state["imprese"]["naked"] = True
-		if cfg["talismani"]:
+		if CONFIG()["talismani"]:
 			@create_task("Rimettiti subito il talismano", client=client, item=message.matches[0]['talismano'])
 			async def rimetti_talismano(ctx):
 				await ctx.client.send_message(LOOTBOT, f"Equipaggia {ctx.item}")

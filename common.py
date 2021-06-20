@@ -1,11 +1,11 @@
 import asyncio
 import random
-import traceback
 import logging
 import json
 import os
 
 from enum import Enum
+from typing import Union
 
 from bot import alemiBot
 
@@ -178,6 +178,7 @@ def _update_values(cfg:dict, src:dict) -> dict:
 	return cfg
 
 class ConfigLoader:
+	"""Abstract implementation of a config loader. Must provide async serialize and unserialize"""
 	async def unserialize(self) -> dict:
 		raise NotImplementedError
 
@@ -185,6 +186,7 @@ class ConfigLoader:
 		raise NotImplementedError
 	
 class FileLoader(ConfigLoader):
+	"""Load and store config in a file on local filesystem. Path can be specified"""
 	def __init__(self, path:str):
 		self.path = path
 
@@ -200,12 +202,17 @@ class FileLoader(ConfigLoader):
 		return True
 
 class MessageLoader(ConfigLoader):
-	def __init__(self, client, msg_id:int):
+	"""Load and store config in a telegram message.
+	You should only use saved messages or channels since they can be edited forever.
+	Using a group or direct message will break changing config, but will load fine.
+	Needs a known message_id at least"""
+	def __init__(self, client, msg_id:int, chan:Union[str,int]="me"):
 		self.msg_id = msg_id
+		self.chan = int(chan) if chan.isnumeric() else chan
 		self.client = client
 
 	async def unserialize(self) -> dict:
-		msg = await self.client.get_messages("me", self.msg_id)
+		msg = await self.client.get_messages(self.chan, self.msg_id)
 		if msg.empty:
 			return {}
 		return json.loads(msg.text)
@@ -214,46 +221,6 @@ class MessageLoader(ConfigLoader):
 		text = json.dumps(data, default=str)
 		await self.client.edit_message_text("me", self.msg_id, text, parse_mode=None)
 		return True
-
-class ConfigHolder:
-	def __init__(self):
-		self.store : dict = DEFAULTS
-		self.loader : ConfigLoader = None
-
-	def update(self, data:dict):
-		self.store = _update_values(self.store, data)
-
-	def get(self, section:str = '') -> dict:
-		if section in self.store:
-			return self.store[section]
-		return self.store
-
-	async def serialize(self):
-		await self.loader.serialize(self.store)
-
-	async def unserialize(self):
-		self.update(await self.loader.unserialize())
-
-	def __str__(self) -> str:
-		return str(self.store)
-
-CONFIG = ConfigHolder()
-
-@alemiBot.on_ready()
-async def load_config(client):
-	loader = alemiBot.config.get("lbconfig", "loader", fallback="file").lower().strip()
-	logging.info("Loading config with loader '%s'", loader)
-	if loader == "file":
-		path = alemiBot.config.get("lbconfig", "path", fallback="plugins/lootbot/data/config.json")
-		CONFIG.loader = FileLoader(path)
-	elif loader == "message":
-		CONFIG.loader = MessageLoader(client, int(alemiBot.config.get("lbconfig", "msg_id")))
-	else:
-		logging.error("Invalid ConfigLoader type provided, defaulting to 'file'. Valid are ('file', 'message')")
-		path = alemiBot.config.get("lbconfig", "path", fallback="plugins/lootbot/data/config.json")
-		CONFIG.loader = FileLoader(path)
-	await CONFIG.unserialize()
-
 
 class MapTile(Enum):
 	scrigno = "💰"
@@ -297,10 +264,56 @@ class Rarity(Enum):
 	def __ne__(self, other):
 		return self.value != other.value
 
-WAIT = CONFIG.get("wait")
+
+class ConfigHolder:
+	"""A wrapper to hold the config data and loader
+
+	Serialize and unserialize can be called directly on this without args.
+	Calling the config holder itself will return the config dictionary"""
+	def __init__(self):
+		self.store : dict = DEFAULTS
+		self.loader : ConfigLoader = None
+
+	def __call__(self) -> dict:
+		return self.store
+
+	def update(self, data:dict):
+		self.store = _update_values(self.store, data)
+
+	async def serialize(self):
+		await self.loader.serialize(self.store)
+
+	async def unserialize(self):
+		self.update(await self.loader.unserialize())
+
+	def __str__(self) -> str:
+		return str(self.store)
+
+CONFIG = ConfigHolder()
+
+@alemiBot.on_ready()
+async def load_config(client):
+	loader = alemiBot.config.get("lbconfig", "loader", fallback="file").lower().strip()
+	logging.info("Loading config with loader '%s'", loader)
+	if loader == "message":
+		CONFIG.loader = MessageLoader(
+			client,
+			int(alemiBot.config.get("lbconfig", "msg_id")),
+			alemiBot.config.get("lbconfig", "chan_id", fallback="me")
+		)
+	else: # file is default loader
+		if loader != "file":
+			logging.error("Invalid ConfigLoader type provided, defaulting to 'file'. Valid are ('file', 'message')")
+		CONFIG.loader = FileLoader(
+			alemiBot.config.get("lbconfig", "path", fallback="plugins/lootbot/data/config.json")
+		)
+	await CONFIG.unserialize()
+
 # Global utilities
 async def random_wait(n=1):
 	for _ in range(n):
-		await asyncio.sleep(random.gauss(WAIT["gauss"]["mu"], WAIT["gauss"]["sigma"]) + 
-							random.uniform(WAIT["uni"]["min"], WAIT["uni"]["max"]) +
-							((random.uniform(0, 1)**WAIT["poly"]["exp"]) * WAIT["poly"]["coeff"]))
+		await asyncio.sleep(
+			random.gauss(CONFIG()["wait"]["gauss"]["mu"], CONFIG()["wait"]["gauss"]["sigma"]) + 
+			random.uniform(CONFIG()["wait"]["uni"]["min"], CONFIG()["wait"]["uni"]["max"]) +
+			((random.uniform(0, 1)**CONFIG()["wait"]["poly"]["exp"]) * CONFIG()["wait"]["poly"]["coeff"])
+		)

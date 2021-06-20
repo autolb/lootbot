@@ -8,8 +8,6 @@ from bot import alemiBot
 from plugins.lootbot.common import LOOTBOT, LOOTPLUSBOT, random_wait, CONFIG
 from plugins.lootbot.loop import LOOP, create_task
 
-CFG = CONFIG.get("incarichi")
-
 CHOICES = ["In groppa al drago", "Uno sopra l'altro", "La ricerca di tanto cibo", "Un gruppo di Cerbrutti",
 		   "Li attirate con un'esca", "Ne assaggiate per dimostrare la qualità", "Andate in Piazza",
 		   "Cercate l'attrezzo", "Forzate la porta", "Lo affrontate", "Imbevuta nel veleno",
@@ -34,7 +32,7 @@ CHOICES = ["In groppa al drago", "Uno sopra l'altro", "La ricerca di tanto cibo"
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.inline_keyboard, group=6969) # Do this for any message with inline buttons
 async def auto_incarichi(client, message):
-	if CFG["auto"]:
+	if CONFIG()["incarichi"]["auto"]:
 		kb = message.reply_markup.inline_keyboard
 		for i in range(len(kb)):
 			for j in range(len(kb[i])):
@@ -45,7 +43,7 @@ async def auto_incarichi(client, message):
 
 @alemiBot.on_message(filters.chat(LOOTPLUSBOT) & filters.regex(pattern=r"[^ ]+ ti incita a votare per l'incarico!"), group=6969)
 async def incitato_a_votare(client, message):
-	if CFG["auto"]:
+	if CONFIG()["incarichi"]["auto"]:
 		@create_task("Controlla incarico in corso", client=client)
 		async def check_task(ctx):
 			await ctx.client.send_message(LOOTBOT, "/incarico")

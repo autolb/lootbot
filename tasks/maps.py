@@ -27,8 +27,6 @@ TILES = {
 	"PRIORITY" : [ "💰", "🔩", "✨", "🔋", "💥", "◼️", "💊", "💸", "🔁", "💨", "◻️", "👣", "🕳", "⚡️", "☠️"]
 }
 
-CFG = CONFIG.get("mappe")
-
 def update_board(old, new):
 	"""Changes unexplored tiles with explored ones, remembering progress"""
 	for i in range(min(len(old), len(new))):
@@ -43,7 +41,7 @@ def dist(player, loc): # This is not an euclidean distance! It's discrete
 	return abs(player[0] - loc[0]) + abs(player[1] - loc[1])
 
 def b_dist(pl, loc): # biased towards the center
-	return dist(pl, loc) + (dist((4, 4), loc) * CFG["ai"]["center-bias"])
+	return dist(pl, loc) + (dist((4, 4), loc) * CONFIG()["mappe"]["ai"]["center-bias"])
 
 def seek_player(board):
 	for i, row in zip(range(len(board)), board):
@@ -96,22 +94,22 @@ def pathfind(pl, dest, board, priority, safe=False):
 			tile = board[pos[0]][pos[1]]
 			if tile == "☠️": # Literally can't walk on them
 				continue
-			score = (len(priority) - priority.index(tile)) * CFG["ai"]["base-mult"]
+			score = (len(priority) - priority.index(tile)) * CONFIG()["mappe"]["ai"]["base-mult"]
 			if safe and next_to_zone(pos, board):
-				score -= CFG["ai"]["zone"]
+				score -= CONFIG()["mappe"]["ai"]["zone"]
 				if i == 0 and j == 0:
-					score -= 3 * CFG["ai"]["avoid"] # extra malus points for standing still next to zone
+					score -= 3 * CONFIG()["mappe"]["ai"]["avoid"] # extra malus points for standing still next to zone
 			if i == 0 and j == 0:
-				score -= CFG["ai"]["stationary"]
+				score -= CONFIG()["mappe"]["ai"]["stationary"]
 			if b_dist((pl[0] + i, pl[1] + j) , dest) < b_dist(pl, dest):
-				score += CFG["ai"]["objective"]
+				score += CONFIG()["mappe"]["ai"]["objective"]
 			elif b_dist((pl[0] + i, pl[1] + j), dest) > b_dist(pl, dest):
-				score -= CFG["ai"]["objective"]
+				score -= CONFIG()["mappe"]["ai"]["objective"]
 			if (abs(delta[0]) > abs(delta[1]) and abs(i) > abs(j)) \
 			or (abs(delta[0]) < abs(delta[1]) and abs(i) < abs(j)):
-				score += CFG["ai"]["zigzag"]
+				score += CONFIG()["mappe"]["ai"]["zigzag"]
 			if tile in TILES["AVOID"]:
-				score -= CFG["ai"]["avoid"]
+				score -= CONFIG()["mappe"]["ai"]["avoid"]
 			avail.append(((i, j), score))
 	avail.sort(key=lambda x: x[1], reverse=True)
 	return vec_to_char(avail[0][0])
@@ -175,8 +173,7 @@ async def show_map_command(client, message):
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La partita (?:di allenamento |)è terminata!"), group=45)
 async def on_map_finished(client, message):
-	cfg = CONFIG.get()
-	if cfg["log"]["pin"]["map"]:
+	if CONFIG()["log"]["pin"]["map"]:
 		await message.pin()
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.me & filters.regex(pattern=r"Allenamento 🥋|Accedi alla Lobby 🏹"), group=45)
@@ -185,7 +182,7 @@ async def starting_map(client, message):
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il tempo di ricerca nella lobby è scaduto, accedi di nuovo!"), group=45)
 async def lobby_expired(client, message):
-	if CFG["reque"]:
+	if CONFIG()["mappe"]["reque"]:
 		@create_task("Rientra in Lobby Mappe", client=client, train=bool(LOOP.state["map"]["train"]))
 		async def reque_map(ctx):
 			await apri_mappa(ctx)
@@ -204,10 +201,10 @@ MAIN_MENU_CHECK = re.compile(r"🗺 Puoi esplorare le Mappe(?: \(☠️ (?P<time
 async def main_menu_trigger(client, message):
 	LOOP.state["map"]["running"] = False
 	match = MAIN_MENU_CHECK.search(message.text)
-	if len(LOOP) < 1 and CFG["auto"] and match:
+	if len(LOOP) < 1 and CONFIG()["mappe"]["auto"] and match:
 		if match["time"]:
 			LOOP.add_task(create_task("Mappa in attesa", client=client)(apri_mappa))
-		elif CFG["start"]:
+		elif CONFIG()["mappe"]["start"]:
 			@create_task("Rientra in Lobby Mappe", client=client)
 			async def start_map(ctx):
 				await apri_mappa(ctx)
@@ -220,15 +217,15 @@ async def main_menu_trigger(client, message):
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Esplorazione mappa in corso!"), group=45)
 async def why_2_steps_to_open_map_ffs(client, message):
-	if CFG["auto"]:
+	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("Torna alla mappa", client=client)(torna_mappa))
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Puoi procedere all'esplorazione della mappa!"), group=45)
 async def map_ready(client, message):
-	if CFG["auto"]:
-		if not CFG["prio"]:
+	if CONFIG()["mappe"]["auto"]:
+		if not CONFIG()["mappe"]["prio"]:
 			LOOP.state["dungeon"]["interrupt"] = True
-		LOOP.add_task(create_task("Torna alla mappa", client=client)(torna_mappa), prio=CFG["prio"])
+		LOOP.add_task(create_task("Torna alla mappa", client=client)(torna_mappa), prio=CONFIG()["mappe"]["prio"])
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La mappa è stata generata!"), group=45)
 async def map_generated(client, message):
@@ -238,13 +235,13 @@ async def map_generated(client, message):
 	LOOP.state["map"]["board"] = {}
 	LOOP.state["map"]["dead"] = False
 	LOOP.state["map"]["once"] = True
-	if CFG["auto"]:
+	if CONFIG()["mappe"]["auto"]:
 		@create_task("'Vai in battaglia' lmao larpa meno edo dioporco", client=client)
 		async def start_map(ctx):
 			await ctx.client.send_message(LOOTBOT, "Vai in battaglia")
-		if not CFG["prio"]:
+		if not CONFIG()["mappe"]["prio"]:
 			LOOP.state["dungeon"]["interrupt"] = True
-		LOOP.add_task(start_map, prio=CFG["prio"])
+		LOOP.add_task(start_map, prio=CONFIG()["mappe"]["prio"])
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.me & filters.regex(pattern=r"Torna alla mappa"), group=45)
 async def manual_map_open(client, message): # This is needed to set map as running in case user is playing manually
@@ -263,7 +260,7 @@ async def map_screen(client, message):
 	mapstate = LOOP.state["map"]
 	if LOOP.state["map"]["once"]:
 		LOOP.state["map"]["once"] = False
-		if CFG["mapmatcher"]:
+		if CONFIG()["mappe"]["mapmatcher"]:
 			message.forward(MAPMATCHERBOT)
 	if match:
 		mapstate["opponents"]["left"] = int(match["left"])
@@ -271,7 +268,7 @@ async def map_screen(client, message):
 		mapstate["hp"] = int(match["hp"].replace(".", ""))
 		if match["time"]:
 			mapstate["zone-time"] = int(match["time"])
-			mapstate["safe"] = mapstate["zone-time"] <= CFG["safetime"]
+			mapstate["safe"] = mapstate["zone-time"] <= CONFIG()["mappe"]["safetime"]
 		b = [ row.split() for row in match["board"].split("\n") ]
 		pl = seek_player(b)
 		if mapstate["board"] != {}:
@@ -281,14 +278,14 @@ async def map_screen(client, message):
 			mapstate["board"] = b
 		mapstate["player"] = pl
 		mapstate["locations"] = Destinations(mapstate["board"], pl, safe=mapstate["safe"])
-	if CFG["auto"]:
+	if CONFIG()["mappe"]["auto"]:
 		board = mapstate["board"]
 		pl = mapstate["player"]
 		locations = mapstate["locations"]
 		prio = [ "☠️", "⚡️", "🕳", "👣", "◼️", "💨", "🔁", "💸", "💊", "◻️", "💥", "🔋", "✨", "🔩", "💰" ] \
-				if mapstate["hp"] < CFG["soglie"]["hp-white"] else \
+				if mapstate["hp"] < CONFIG()["mappe"]["soglie"]["hp-white"] else \
 				 [ "☠️", "⚡️", "🕳", "👣", "◻️", "💨", "🔁", "💸", "💊", "◼️", "💥", "🔋", "✨", "🔩", "💰" ]
-		if CFG["attack"]:
+		if CONFIG()["mappe"]["attack"]:
 			prio.remove("👣") or prio.append("👣") # jank but oneliner
 		if mapstate["cash"] == {} or mapstate["rottami"] == {} or mapstate["just-killed"]:
 			@create_task("Controlla sacca", client=client)
@@ -313,7 +310,7 @@ async def map_screen(client, message):
 			return # Map is already just 1 cell in the center, don't even try to move!
 		# Priority is: HEAL, LOOT, BUY, UNEXPLORED, EXPLORED
 		pl = mapstate["player"]
-		if mapstate["hp"] < CFG["soglie"]["hp-heal"] and mapstate["cash"] >= CFG["soglie"]["heal-cash"] and "💊" in locations:
+		if mapstate["hp"] < CONFIG()["mappe"]["soglie"]["hp-heal"] and mapstate["cash"] >= CONFIG()["mappe"]["soglie"]["heal-cash"] and "💊" in locations:
 			mapstate["dest"] = "💊"
 			prio.remove("💊") or prio.append("💊")
 			mov = pathfind(pl, locations["💊"], board, prio, safe=mapstate["safe"])
@@ -324,16 +321,16 @@ async def map_screen(client, message):
 				mapstate["dest"] = sym
 				return LOOP.add_task(create_task("Raccogli loot (mappa)", client=client,
 								direction=pathfind(pl, locations[sym], board, prio, safe=mapstate["safe"]))(move_mappa), prio=True)
-		if mapstate["cash"] >= CFG["soglie"]["shop-cash"] and "💸" in locations:
+		if mapstate["cash"] >= CONFIG()["mappe"]["soglie"]["shop-cash"] and "💸" in locations:
 			mapstate["dest"] = "💸"
 			return LOOP.add_task(create_task("Go to emporio (mappa)", client=client,
 											direction=pathfind(pl, locations["💸"], board, prio, safe=mapstate["safe"]))(move_mappa), prio=True)
-		if mapstate["rottami"] >= CFG["soglie"]["centro-min"] and "🔁" in locations:
+		if mapstate["rottami"] >= CONFIG()["mappe"]["soglie"]["centro-min"] and "🔁" in locations:
 			mapstate["dest"] = "🔁"
 			return LOOP.add_task(create_task("Go to centro scambi (mappa)", client=client,
 											direction=pathfind(pl, locations["🔁"], board, prio, safe=mapstate["safe"]))(move_mappa), prio=True)
 		# If there's nowhere to go, just go towards the center
-		if mapstate["hp"] < CFG["soglie"]["hp-white"] and "◻️" in locations: # If low, prefer explored spaces to heal!
+		if mapstate["hp"] < CONFIG()["mappe"]["soglie"]["hp-white"] and "◻️" in locations: # If low, prefer explored spaces to heal!
 			mapstate["dest"] = "◻️"
 			return LOOP.add_task(create_task("Muoviti su spazi bianchi (mappa)", client=client,
 											direction=pathfind(pl, locations["◻️"], board, prio, safe=mapstate["safe"]))(move_mappa), prio=True)
@@ -351,7 +348,7 @@ async def impulse_shows_map(client, message):
 	b = LOOP.state["map"]["board"]
 	pl = LOOP.state["map"]["player"]
 	b[pl[0]][pl[1]] = "◻️"
-	if CFG["auto"]:
+	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("Impulso! Riguarda la mappa", client=client)(torna_mappa), prio=True)
 
 ROTTAME_CHECK = re.compile(r"🔩 Rottame")
@@ -379,12 +376,12 @@ async def nothing_to_do_here(client, message):
 		b[pl[0]][pl[1]] = "🕳"
 	else:
 		b[pl[0]][pl[1]] = "◻️"
-	if CFG["auto"]:
+	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("Niente da fare qui", client=client)(mnu), prio=True)
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex("Decidi di scappare dallo scontro!"), group=45)
 async def flee_from_combat(client, message):
-	if CFG["auto"]:
+	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("Scappato dallo scontro", client=client)(torna_mappa), prio=True)
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(".*(?:Vieni|Venendo) sconfitto definitivamente con un colpo mortale!"), group=45)
@@ -393,7 +390,7 @@ async def got_killed(client, message):
 	board = LOOP.state["map"]["board"]
 	pl = LOOP.state["map"]["player"]
 	board[pl[0]][pl[1]] = "⚰️"
-	if CFG["auto"]:
+	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("Sconfitto nelle mappe!", client=client)(mnu), prio=True)
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
@@ -410,12 +407,12 @@ async def go_to_fight(client, message):
 	b = LOOP.state["map"]["board"]
 	pl = LOOP.state["map"]["player"]
 	b[pl[0]][pl[1]] = "◻️"
-	if CFG["auto"]:
+	if CONFIG()["mappe"]["auto"]:
 		@create_task("Vai al combattimento", client=client)
 		async def goto_fight(ctx):
 			await ctx.client.send_message(LOOTBOT, "Attacca!")
-		LOOP.add_task(goto_fight, prio=CFG["prio"])
-		if not CFG["prio"]:
+		LOOP.add_task(goto_fight, prio=CONFIG()["mappe"]["prio"])
+		if not CONFIG()["mappe"]["prio"]:
 			LOOP.state["dungeon"]["interrupt"] = True
 
 ROTTAME_BOTTONE_CHECK = re.compile(r"🔩 Rottame \((?P<n>[0-9]+)\)")
@@ -439,15 +436,15 @@ async def fight_screen(client, message):
 		"flaridion" : m["flari"] if m["flari"] else "N/A"
 	}
 	mapstate["hp"] = int(m["myhp"].replace(".", ""))
-	if CFG["auto"]:
-		if CFG["friends"]["flee"] and mapstate["opponents"]["left"] > CFG["friends"]["limit"] \
+	if CONFIG()["mappe"]["auto"]:
+		if CONFIG()["mappe"]["friends"]["flee"] and mapstate["opponents"]["left"] > CONFIG()["mappe"]["friends"]["limit"] \
 				and mapstate["enemy"]["name"] in LOOP.state["friends"]:
 			@create_task(f"Scappa da {mapstate['enemy']['name']}", client=client)
 			async def flee(ctx):
 				await ctx.client.send_message(LOOTBOT, "🏳️ Scappa")
 			return LOOP.add_task(flee, prio=True)
 		text = "🗡 Attacco"
-		if LOOP.state["map"]["enemy"]["hp"] >= CFG["soglie"]["hp-rottame"]:
+		if LOOP.state["map"]["enemy"]["hp"] >= CONFIG()["mappe"]["soglie"]["hp-rottame"]:
 			kb = [ btn for sub in message.reply_markup.keyboard for btn in sub ]
 			for btn in kb:
 				if "Riprenditi" in btn: # Was stunned
@@ -483,12 +480,12 @@ async def killed_someone(client, message):
 		if LOOP.state["map"]["cash"] == {}:
 			LOOP.state["map"]["cash"] = 0
 		LOOP.state["map"]["cash"] += int(CASH_CHECK.search(message.text)["n"].replace(".", ""))
-	if CFG["auto"]:
+	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("Ucciso Nemico", client=client)(torna_mappa), prio=True)
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"L'avversario scappa dallo scontro!"), group=45)
 async def enemy_fled(client, message):
-	if CFG["auto"]:
+	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("L'avversario e` fuggito", client=client)(torna_mappa), prio=True)
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
@@ -526,7 +523,7 @@ async def got_to_emporio(client, message):
 		b[pl[0]][pl[1]] = "💊"
 	elif message.text.startswith("Raggiungi un 💨 luogo"):
 		b[pl[0]][pl[1]] = "💨"
-	if CFG["auto"]:
+	if CONFIG()["mappe"]["auto"]:
 		@create_task("Accedi all'emporio", client=client)
 		async def open_emporio(ctx):
 			await ctx.client.send_message(LOOTBOT, "Accedi all'edificio")
@@ -543,7 +540,7 @@ async def buy_from_emporio(client, message):
 	mapstate["cash"] = int(match["curr"].replace(".", ""))
 	price = int(match["price"].replace(".", ""))
 	# TODO check what I'm buying
-	if CFG["auto"]:
+	if CONFIG()["mappe"]["auto"]:
 		if mapstate["cash"] > price:
 			@create_task("Compra dall'emporio (mappe)", client=client)
 			async def buy_item(ctx):
@@ -571,8 +568,8 @@ async def buy_from_centro_scambi(client, message):
 	mapstate["rottami"] = int(match["curr"])
 	price = int(match["price"])
 	# TODO check what I'm buying
-	if CFG["auto"]:
-		if mapstate["rottami"] - price >= CFG["soglie"]["rottami"]:
+	if CONFIG()["mappe"]["auto"]:
+		if mapstate["rottami"] - price >= CONFIG()["mappe"]["soglie"]["rottami"]:
 			@create_task("Compra dal centro scambi (mappe)", client=client)
 			async def buy_rottami(ctx):
 				await si(ctx)
@@ -599,8 +596,8 @@ async def buy_from_farmacia(client, message):
 	mapstate["cash"] = int(match["curr"].replace(".", ""))
 	price = int(match["price"].replace(".", ""))
 	# TODO check what I'm buying
-	if CFG["auto"]:
-		if mapstate["hp"] < CFG["soglie"]["hp-heal"] and mapstate["cash"] > price:
+	if CONFIG()["mappe"]["auto"]:
+		if mapstate["hp"] < CONFIG()["mappe"]["soglie"]["hp-heal"] and mapstate["cash"] > price:
 			@create_task("Curati in Farmacia (mappe)", client=client)
 			async def heal(ctx):
 				await si(ctx)
@@ -618,7 +615,7 @@ async def buy_from_farmacia(client, message):
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"(?:Non necessiti di cure|Non hai monete per le cure), procedi?"), group=45)
 async def no_heal_needed(client, message):
-	if CFG["auto"]:
+	if CONFIG()["mappe"]["auto"]:
 		@create_task("Non necessito di cure", client=client)
 		async def no_heal_needed(ctx):
 			await si(ctx)
@@ -631,8 +628,8 @@ async def no_heal_needed(client, message):
 	pattern=r"In questo luogo puoi scegliere se utilizzare il teletrasporto, rischiando di ritrovarti in un luogo pericoloso"
 ), group=45)
 async def maybe_use_teleport(client, message):
-	if CFG["auto"]:
-		if CFG["teleport"]:
+	if CONFIG()["mappe"]["auto"]:
+		if CONFIG()["mappe"]["teleport"]:
 			@create_task("Usa il teletrasporto", client=client)
 			async def ignore_tp(ctx):
 				await ctx.client.send_message(LOOTBOT, "Affronta un nemico")

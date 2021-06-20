@@ -27,15 +27,13 @@ OFFERTA_CONTRABBANDIERE = re.compile(r"🔩 Offerta Contrabbandiere disponibile"
 	pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"
 ), group=57)
 async def vai_al_contrabbandiere(client, message):
-	cfg = CONFIG.get()
-	if cfg["contrabbandiere"] and not LOOP.state["smuggler"]["cant-craft"] \
+	if CONFIG()["contrabbandiere"] and not LOOP.state["smuggler"]["cant-craft"] \
 	and OFFERTA_CONTRABBANDIERE.search(message.text) and len(LOOP) == 0:
 		LOOP.add_task(create_task("Offerta contrabbandiere disponibile", client=client)(contrabbandiere))
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il Contrabbandiere ha una nuova offerta per te!"), group=57)
 async def nuovo_contrabbandiere(client, message):
-	cfg = CONFIG.get()
-	if cfg["contrabbandiere"]:
+	if CONFIG()["contrabbandiere"]:
 		LOOP.add_task(create_task("Nuova offerta Contrabbandiere", client=client)(contrabbandiere))
 	LOOP.state["smuggler"]["try-craft-once"] = False
 	LOOP.state["smuggler"]["cant-craft"] = False
@@ -45,8 +43,7 @@ ITEM_SEARCH = re.compile(r"quando torna ti propone affari diversi\.\n\n(?P<item>
 	pattern=r"Benvenut. (?:.*)!\nPuoi creare oggetti per il Contrabbandiere"
 ), group=57)
 async def schermata_contrabbandiere(client, message):
-	cfg = CONFIG.get()
-	if cfg["contrabbandiere"]:
+	if CONFIG()["contrabbandiere"]:
 		match = ITEM_SEARCH.search(message.text)
 		if match:
 			s = match["status"]
