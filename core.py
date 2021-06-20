@@ -112,7 +112,8 @@ async def get_config(client, message):
 		keys = list(message.command[0].split("."))
 		value = _parse_val(message.command[1])
 		last = keys.pop()
-		data = _extract(data, '.'.join(keys))
+		if len(keys) > 0:
+			data = _extract(data, '.'.join(keys))
 		# Some lame safety checks for users
 		if not data:
 			raise KeyError(f"No setting matching '{message.command[0]}'")
