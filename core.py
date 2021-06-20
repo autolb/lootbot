@@ -35,7 +35,7 @@ async def toggle_night(client, message):
 		CONFIG()["night"] = False
 	CONFIG()["night"] = not CONFIG()["night"]
 	await CONFIG.serialize()
-	await edit_or_reply(message, f"` → ` Night mode [`{'ON' if cfg['night'] else 'OFF'}`]")
+	await edit_or_reply(message, f"` → ` Night mode [`{'ON' if CONFIG()['night'] else 'OFF'}`]")
 
 @alemiBot.on_message(is_superuser & filterCommand(["lfriend", "lfriends"], list(alemiBot.prefixes)))
 @report_error(logger)
