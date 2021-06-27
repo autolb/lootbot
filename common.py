@@ -292,7 +292,7 @@ class ConfigHolder:
 CONFIG = ConfigHolder()
 
 @alemiBot.on_ready()
-async def load_config(client):
+async def load_config(client, *args, **kwargs): # since this is still a PR, args may change! Accept any combination as safe compatibility measure
 	loader = alemiBot.config.get("lbconfig", "loader", fallback="file").lower().strip()
 	logging.info("Loading config with loader '%s'", loader)
 	if loader == "message":
