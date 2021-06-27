@@ -8,6 +8,7 @@ from enum import Enum
 from typing import Union
 
 from bot import alemiBot
+from pyrogram import filters
 
 # ids
 LOOTBOT = "lootgamebot"
@@ -291,8 +292,8 @@ class ConfigHolder:
 
 CONFIG = ConfigHolder()
 
-@alemiBot.on_ready()
-async def load_config(client, *args, **kwargs): # since this is still a PR, args may change! Accept any combination as safe compatibility measure
+@alemiBot.on_client_status(filters.client_ready)
+async def load_config(client, status_update):
 	loader = alemiBot.config.get("lbconfig", "loader", fallback="file").lower().strip()
 	logging.info("Loading config with loader '%s'", loader)
 	if loader == "message":
