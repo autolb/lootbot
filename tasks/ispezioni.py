@@ -34,6 +34,7 @@ def score(numbers):
 
 GNOMO_CHECK = re.compile(r"Gnomo in attesa di istruzioni")
 ATTESA_ISPEZIONE = re.compile(r"🔦 Gnomo in (?:esplorazione|ispezione) fino alle (?P<time>[0-9:]+)")
+ISPEZIONI_RIMASTE = re.compile(r"🔦 (?P<n>[0-9]+) ispezioni possibili oggi")
 @alemiBot.on_message(filters.chat(LOOTBOT) &
 	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=53)
 async def main_menu_triggers(client, message):
@@ -41,6 +42,9 @@ async def main_menu_triggers(client, message):
 		LOOP.state["ispezione"]["rimaste"] = 10
 	if ATTESA_ISPEZIONE.search(message.text) or GNOMO_CHECK.search(message.text):
 		LOOP.state["ispezione"]["ongoing"] = True
+	match = ISPEZIONI_RIMASTE.search(message.text)
+	if match:
+		LOOP.state["ispezioni"]["rimaste"] = int(match["n"])
 	kb = [ btn for sub in message.reply_markup.keyboard for btn in sub ]
 	if "💰Il Ricercato (Evento) 👺" not in kb and len(LOOP) < 1 and CONFIG()["ispezione"]["auto"]:
 		if GNOMO_CHECK.search(message.text):
