@@ -93,7 +93,7 @@ async def manhunt_finished(client, message):
 """
 Itinerario
 """
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Itinerario Propizio"), group=60)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"^Itinerario Propizio"), group=60)
 async def choose_itinerario_region(client, message):
 	if CONFIG()["eventi"]["itinerario"]["auto"]:
 		@create_task("Scegli Regione itinerario", client=client)

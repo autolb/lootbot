@@ -69,3 +69,4 @@ async def schermata_contrabbandiere(client, message):
 									 client=client, recipe=match["item"])(craft_sync))
 			else:
 				LOOP.state["smuggler"]["cant-craft"] = True
+				LOOP.add_task(create_task("Impossibile completare offerta contrabbandiere", client=client)(mnu))

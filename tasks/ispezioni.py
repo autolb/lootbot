@@ -59,7 +59,7 @@ async def main_menu_triggers(client, message):
 			LOOP.add_task(goto_rifugio)
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
-	r"Il tuo gnomo non è riuscito a raggiungere il rifugio nemico, dannazione!|" +
+	r"Il tuo gnomo (?P<gnomo>Occhiofurbo|Piedelesto|Testacalda) non è riuscito a raggiungere il rifugio nemico, dannazione!|" +
 	r"La tua combinazione di rune \((?P<me>[0-9]+)\) è (?:migliore|peggiore) di quella del guardiano \((?P<other>[0-9]+)\)!"
 ), group=53)
 async def riavvia_ispezione(client, message):
