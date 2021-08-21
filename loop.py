@@ -124,6 +124,8 @@ class Context:
 		self.name = name
 	def __str__(self):
 		return json.dumps(self.__dict__, indent=2)
+	def __getattr__(self, name:str) -> None: # Called only when accessing non-existing attributes
+		return None
 
 """
 This is the decorator to create a task object ready to be run by the TaskLoop.

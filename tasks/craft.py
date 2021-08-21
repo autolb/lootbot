@@ -85,21 +85,23 @@ async def procedi(ctx):
 
 # Auto Craft
 @alemiBot.on_message(~filters.chat(CRAFTLOOTBOT) & is_superuser & filterCommand(["lcraft", "craft"], list(alemiBot.prefixes),
-																		flags=["-loop", "-sync", "-craft", "-stop"]))
+																		flags=["-loop", "-sync", "-craft", "-stop", "-nomsg"]))
 async def auto_craft(client, message):
 	global CRAFT_MSG
+	no_msg = bool(message.command["-nomsg"])
 	if message.command["-stop"]:
 		LOOP.state["craft"]["ongoing"] = False
 		curr = LOOP.state["craft"]["list"][0]
 		i = LOOP.state["craft"]["index"]
 		tot = LOOP.state["craft"]["total"]
-		await edit_or_reply(CRAFT_MSG, f"<code>[!] → </code> Stopped <code>{curr}</code> [<code>{i}/{tot}</code>]", parse_mode="html")
+		if CRAFT_MSG:
+			await edit_or_reply(CRAFT_MSG, f"<code>[!] → </code> Stopped <code>{curr}</code> [<code>{i}/{tot}</code>]", parse_mode="html")
 	elif message.command["-loop"]:
 		LOOP.add_task(create_task(f"Craft loop (forced)", client=client)(craft_loop))
 		CRAFT_MSG = await edit_or_reply(message, "<code>→ </code> Force started craft loop", parse_mode="html")
 	elif message.command["-sync"]:
 		LOOP.add_task(create_task("Sync with CraftLootBot", client=client)(sync_inventory))
-		await edit_or_reply(message, "<code> → </code> Synching inventory (no craft)", parse_mode="html")
+		CRAFT_MSG = await edit_or_reply(message, "<code> → </code> Synching inventory (no craft)", parse_mode="html")
 	elif len(message.command) < 1:
 		return await edit_or_reply(message, "<code>[!] → </code> No arg given", parse_mode="html")
 	elif message.command["-craft"]:
@@ -110,6 +112,8 @@ async def auto_craft(client, message):
 		target = message.command.text
 		LOOP.add_task(create_task(f"Craft {target}", client=client, recipe=target)(craft_sync))
 		CRAFT_MSG = await edit_or_reply(message, "<code>→ </code> Synching inventory", parse_mode="html")
+	if no_msg:
+		CRAFT_MSG = None
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La tua rinascita non è sufficente per creare questo oggetto"), group=250)
 async def rinascita_insufficiente(client, message):
