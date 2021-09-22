@@ -329,7 +329,7 @@ async def map_screen(client, message):
 		mapstate["cariche"] -= 1
 		# TODO go to closest of these, not to the highest prio one
 		for sym in TILES["GET"]:
-		if sym in locations:
+			if sym in locations:
 				mapstate["dest"] = sym
 				return LOOP.add_task(create_task("Raccogli loot (mappa)", client=client,
 								direction=pathfind(pl, locations[sym], board, prio, safe=mapstate["safe"]))(move_mappa), prio=True)
