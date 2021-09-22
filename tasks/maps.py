@@ -389,8 +389,7 @@ async def nothing_to_do_here(client, message):
 	else:
 		b[pl[0]][pl[1]] = "◻️"
 	if CONFIG()["mappe"]["auto"]:
-		LOOP.add_task(create_task("Niente da fare qui"), client=client)(torna_mappa), prio=True)
-
+		LOOP.add_task(create_task("Niente da fare qui", client=client)(torna_mappa), prio=True)
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex("Decidi di scappare dallo scontro!"), group=45)
 async def flee_from_combat(client, message):
