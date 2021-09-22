@@ -143,7 +143,7 @@ async def ispezione_successo(client, message):
 		LOOP.add_task(start_game)
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
-	r"Il tuo gnomo (?P<name>Occhiofurbo|Piedelesto|Testacalda) ha terminato la raccolta delle rune|Il tuo gnomo (?P<name>Occhiofurbo|Piedelesto|Testacalda) ha cambiato le rune richieste"
+	r"Il tuo gnomo (?P<name1>Occhiofurbo|Piedelesto|Testacalda) ha terminato la raccolta delle rune|Il tuo gnomo (?P<name2>Occhiofurbo|Piedelesto|Testacalda) ha cambiato le rune richieste"
 ), group=53)
 async def game_is_ready(client, message):
 	if CONFIG()["ispezione"]["auto"]:
