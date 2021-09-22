@@ -11,7 +11,7 @@ from plugins.lootbot.loop import LOOP, create_task
 
 from plugins.lootbot.tasks.craft import craft_sync, craft_quick
 
-PRIORITY_DEFAULT = ["-", "Persona in Pericolo", "Stanza dell'Energia", "Fontana di Mana", "Stanza Vuota", 
+PRIORITY_DEFAULT = ["-", "Persona in Pericolo", "Stanza dell'Energia", "Fontana di Mana", "Stanza Vuota",
 					 "Stanza del Cuore e dello Spirito","Stanza impolverata", "Scrigno", "Meditazione", "Stanza Divisa in Due",
 					 "Monete", "Spada o Bottino", "Pulsantiera", "Mostro", "Marinaio e Dado",
 					 "Alchimista dell'Ovest", "Mercante Draconico", "Gioielliere Pazzo", "Predone", "Viandante",
@@ -67,7 +67,7 @@ async def energia_al_massimo(client, message):
 
 # Main Menu
 CARICHE_CHECK = re.compile(r"🔋 (?P<curr>[0-9]+)\/(?P<max>[0-9]+)")
-DUNGEON_RUNNING = re.compile(r"❗️ Esplora il dungeon \((?:(?P<room>[0-9]+)\/(?P<tot>[0-9]+)|Boss)\) (?:[🕐💥 ]+) (?P<time>.*) 🔋 (?P<charges>[0-9]+|∞)\/(?P<maxc>[0-9]+)")
+DUNGEON_RUNNING = re.compile(r"❗️ Esplora il dungeon \((?:Stanza (?P<room>[0-9]+)\/(?P<tot>[0-9]+)|Boss)\) (?:[🕐💥 ]+) (?P<time>.*) 🔋 (?P<charges>[0-9]+|∞)\/(?P<maxc>[0-9]+)")
 DUNGEON_RESTART = re.compile(r"Entra in un dungeon")
 DUNGEON_COOLDOWN_CHECK = re.compile(r"Attesa dungeon fino alle")
 @alemiBot.on_message(filters.chat(LOOTBOT) &
@@ -290,6 +290,9 @@ async def dungeon_main_screen(client, message):
 			priorities = ["Stanza Divisa in Due", "Stanza Vuota"] + priorities
 	if m:
 		ways = [ m["left"], m["up"], m["right"] ]
+		for i in range(len(ways)): # strip monster level, kinda jank but should fix
+			if ways[i].startswith("Mostro"):
+				ways[i] = "Mostro"
 		LOOP.state["dungeon"]["ways"] = ways
 		for way in priorities:
 			if way in ways:
