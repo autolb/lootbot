@@ -220,12 +220,17 @@ async def why_2_steps_to_open_map_ffs(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("Torna alla mappa", client=client)(torna_mappa))
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Puoi procedere all'esplorazione della mappa!"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La mappa si è ristretta e le Cariche Movimento sono state ripristinate!"), group=45)
 async def map_ready(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		if not CONFIG()["mappe"]["prio"]:
 			LOOP.state["dungeon"]["interrupt"] = True
 		LOOP.add_task(create_task("Torna alla mappa", client=client)(torna_mappa), prio=CONFIG()["mappe"]["prio"])
+
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai terminato le mosse a disposizione, attendi il prossimo restringimento"), group=45)
+async def no_more_moves(client, message):
+	if CONFIG()["mappe"]["auto"]:
+		LOOP.add_task(create_task("Finite le mosse", client=client)(mnu), prio=True)
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La mappa è stata generata!"), group=45)
 async def map_generated(client, message):
@@ -235,6 +240,7 @@ async def map_generated(client, message):
 	LOOP.state["map"]["board"] = {}
 	LOOP.state["map"]["dead"] = False
 	LOOP.state["map"]["once"] = True
+	LOOP.state["map"]["cariche"] = 10
 	if CONFIG()["mappe"]["auto"]:
 		@create_task("'Vai in battaglia' lmao larpa meno edo dioporco", client=client)
 		async def start_map(ctx):
@@ -253,7 +259,7 @@ async def manual_map_move(client, message): # This is needed to set map as runni
 		logger.info("Player moved manually in map : %s", message.text)
 		LOOP.state["map"]["player"] = calc_player_move(LOOP.state["map"]["player"], char_to_vec(message.text))
 
-STATUS_CHECK = re.compile(r"👥 (?P<left>[0-9]+) su (?P<max>[0-9]+) sopravvissuti\n❤️ (?P<hp>[0-9\.]+)\n(?:🕐 (?P<cooldown>.*)\n|)(?:☠️ (?:meno di |)(?P<time>[0-9]+) minut(?:o|i)\n|)(?:🔋 (?P<boost>[0-9]+)\n|)\n(?P<board>[📍◼️◻️💰🕳💊🔁💸✨👣🔩☠️💨⚡️🔋💥 \n]+)")
+STATUS_CHECK = re.compile(r"👥 (?P<left>[0-9]+) su (?P<max>[0-9]+) sopravvissuti\n❤️ (?P<hp>[0-9\.]+)\n👣 (?:(?P<cariche>[0-9]+) cariche|Cariche esaurite)\n(?:☠️ (?:meno di |)(?P<time>[0-9]+) minut(?:o|i)\n|)(?:🔋 (?P<boost>[0-9]+)\n|)\n(?P<board>[📍◼️◻️💰🕳💊🔁💸✨👣🔩☠️💨⚡️🔋💥 \n]+)")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"👥 (?P<left>[0-9]+) su (?P<max>[0-9]+) sopravvissuti"), group=45)
 async def map_screen(client, message):
 	match = STATUS_CHECK.search(message.text)
@@ -278,6 +284,10 @@ async def map_screen(client, message):
 			mapstate["board"] = b
 		mapstate["player"] = pl
 		mapstate["locations"] = Destinations(mapstate["board"], pl, safe=mapstate["safe"])
+		if match["cariche"]:
+			mapstate["cariche"] = int(match["cariche"])
+		else:
+			mapstate["cariche"] = 0
 	if CONFIG()["mappe"]["auto"]:
 		board = mapstate["board"]
 		pl = mapstate["player"]
@@ -286,7 +296,10 @@ async def map_screen(client, message):
 				if mapstate["hp"] < CONFIG()["mappe"]["soglie"]["hp-white"] else \
 				 [ "☠️", "⚡️", "🕳", "👣", "◻️", "💨", "🔁", "💸", "💊", "◼️", "💥", "🔋", "✨", "🔩", "💰" ]
 		if CONFIG()["mappe"]["attack"]:
-			prio.remove("👣") or prio.append("👣") # jank but oneliner
+			prio.remove("👣")
+			prio.append("👣")
+		if mapstate["cariche"] < 1: # Out of moves
+			return LOOP.add_task(create_task("Finite mosse mappa", client=client)(mnu), prio=True)
 		if mapstate["cash"] == {} or mapstate["rottami"] == {} or mapstate["just-killed"]:
 			@create_task("Controlla sacca", client=client)
 			async def check_bag(ctx):
@@ -297,8 +310,6 @@ async def map_screen(client, message):
 			LOOP.state["map"]["just-killed"] = False
 			LOOP.state["map"]["dead"] = False
 			return
-		if match["cooldown"]:
-			return LOOP.add_task(create_task("Mappa in cooldown", client=client)(mnu), prio=True)
 		if mapstate["controlla"]:
 			@create_task("Controlla casella", client=client)
 			async def check_tile(ctx):
@@ -315,9 +326,10 @@ async def map_screen(client, message):
 			prio.remove("💊") or prio.append("💊")
 			mov = pathfind(pl, locations["💊"], board, prio, safe=mapstate["safe"])
 			return LOOP.add_task(create_task("Go to farmacia", client=client, direction=mov)(move_mappa), prio=True)
+		mapstate["cariche"] -= 1
 		# TODO go to closest of these, not to the highest prio one
 		for sym in TILES["GET"]:
-			if sym in locations:
+		if sym in locations:
 				mapstate["dest"] = sym
 				return LOOP.add_task(create_task("Raccogli loot (mappa)", client=client,
 								direction=pathfind(pl, locations[sym], board, prio, safe=mapstate["safe"]))(move_mappa), prio=True)
@@ -377,7 +389,8 @@ async def nothing_to_do_here(client, message):
 	else:
 		b[pl[0]][pl[1]] = "◻️"
 	if CONFIG()["mappe"]["auto"]:
-		LOOP.add_task(create_task("Niente da fare qui", client=client)(mnu), prio=True)
+		LOOP.add_task(create_task("Niente da fare qui"), client=client)(torna_mappa), prio=True)
+
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex("Decidi di scappare dallo scontro!"), group=45)
 async def flee_from_combat(client, message):
@@ -546,7 +559,7 @@ async def buy_from_emporio(client, message):
 			async def buy_item(ctx):
 				await si(ctx)
 				await random_wait()
-				await mnu(ctx)
+				await torna_mappa(ctx)
 			LOOP.add_task(buy_item, prio=True)
 			mapstate["cash"] -= price
 		else:
@@ -554,9 +567,9 @@ async def buy_from_emporio(client, message):
 			async def dont_buy_item(ctx):
 				await no(ctx)
 				await random_wait()
-				await mnu(ctx)
+				await torna_mappa(ctx)
 			LOOP.add_task(dont_buy_item, prio=True)
-			
+
 # Centro Scambi
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Puoi scambiare (?P<price>[0-9]+) 🔩 Rottami per (?P<name>.*) " +
@@ -574,7 +587,7 @@ async def buy_from_centro_scambi(client, message):
 			async def buy_rottami(ctx):
 				await si(ctx)
 				await random_wait()
-				await mnu(ctx)
+				await torna_mappa(ctx)
 			LOOP.add_task(buy_rottami, prio=True)
 			mapstate["rottami"] -= price
 		else:
@@ -582,7 +595,7 @@ async def buy_from_centro_scambi(client, message):
 			async def dont_buy_rottami(ctx):
 				await no(ctx)
 				await random_wait()
-				await mnu(ctx)
+				await torna_mappa(ctx)
 			LOOP.add_task(dont_buy_rottami, prio=True)
 
 # Farmacia
@@ -602,7 +615,7 @@ async def buy_from_farmacia(client, message):
 			async def heal(ctx):
 				await si(ctx)
 				await random_wait()
-				await mnu(ctx)
+				await torna_mappa(ctx)
 			LOOP.add_task(heal, prio=True)
 			mapstate["cash"] -= price
 		else:
@@ -610,7 +623,7 @@ async def buy_from_farmacia(client, message):
 			async def dont_heal(ctx):
 				await no(ctx)
 				await random_wait()
-				await mnu(ctx)
+				await torna_mappa(ctx)
 			LOOP.add_task(dont_heal, prio=True)
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"(?:Non necessiti di cure|Non hai monete per le cure), procedi?"), group=45)
@@ -620,7 +633,7 @@ async def no_heal_needed(client, message):
 		async def no_heal_needed(ctx):
 			await si(ctx)
 			await random_wait()
-			await mnu(ctx)
+			await torna_mappa(ctx)
 		LOOP.add_task(no_heal_needed, prio=True)
 
 # Teletrasporto
@@ -642,5 +655,5 @@ async def maybe_use_teleport(client, message):
 			async def ignore_tp(ctx):
 				await ctx.client.send_message(LOOTBOT, "Esci")
 				await random_wait()
-				await mnu(ctx)
+				await torna_mappa(ctx)
 			LOOP.add_task(ignore_tp, prio=True)
