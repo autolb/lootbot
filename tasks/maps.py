@@ -165,7 +165,7 @@ async def show_map_command(client, message):
 					out += cell + " "
 			out += "\n"
 		out += f"❤️ {mapstate['hp']} 🔩 {mapstate['rottami']} 💰 {mapstate['cash']}\n"
-		out += f"👥 {mapstate['opponents']['left']} ☠️ {mapstate['zone-time']} min "
+		out += f"👥 {mapstate['opponents']['left']} 👣 {mapstate['cariche']} "
 		# # would be cool to show this but it's not really kept up-to-date
 		# for gear in mapstate["inventory"]:
 		#	  out += f"` · ` {gear}\n"
@@ -272,9 +272,6 @@ async def map_screen(client, message):
 		mapstate["opponents"]["left"] = int(match["left"])
 		mapstate["opponents"]["max"] = int(match["max"])
 		mapstate["hp"] = int(match["hp"].replace(".", ""))
-		if match["time"]:
-			mapstate["zone-time"] = int(match["time"])
-			mapstate["safe"] = mapstate["zone-time"] <= CONFIG()["mappe"]["safetime"]
 		b = [ row.split() for row in match["board"].split("\n") ]
 		pl = seek_player(b)
 		if mapstate["board"] != {}:
@@ -286,8 +283,10 @@ async def map_screen(client, message):
 		mapstate["locations"] = Destinations(mapstate["board"], pl, safe=mapstate["safe"])
 		if match["cariche"]:
 			mapstate["cariche"] = int(match["cariche"])
+			mapstate["safe"] = mapstate["cariche"] <= CONFIG()["mappe"]["ai"]["min-cariche-safe"]
 		else:
 			mapstate["cariche"] = 0
+			mapstate["safe"] = True
 	if CONFIG()["mappe"]["auto"]:
 		board = mapstate["board"]
 		pl = mapstate["player"]

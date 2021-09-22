@@ -76,7 +76,6 @@ DEFAULTS = {
 		"prio" : False,			# Do maps as soon as available, might leave other tasks hanging
 		"start" : False,		# Queue for a map as soon as possible
 		"reque" : True,			# Put yourself in queue again if it expires, 
-		"safetime" : 5,			# Stop going next to zone when less than these many minutes are left
 		"teleport" : False,		# Teleport to other players
 		"attack" : False,		# Attack other players
 		"friends" : {			# Behavior to use with friends
@@ -92,6 +91,7 @@ DEFAULTS = {
 			"stationary" : 15,		# Points removed to paths not moving
 			"zone" : 100,			# Points removed to paths going into incoming zone
 			"avoid" : 50,			# Points removed to paths going on bad terrain
+			"min-cariche-safe" : 2  # Stop counting corners as valid once you have less (or equal) than this threshold
 		},
 		"soglie" : {				# Thresholds for various choices
 			"rottami" : 2,				# Don't buy with rottami if would leave with fewer rottami than this
