@@ -208,6 +208,14 @@ async def scegli_istanza_dungeon(client, message):
 			await mnu(ctx)
 		LOOP.add_task(choose_dungeon_variant, prio=True)
 
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il dungeon è stato creato"), group=50)
+async def dungeon_creato_entraci(client, message):
+	if CONFIG()["dungeon"]["auto"]:
+		@create_task("Entra nel dungeon", client=client)
+		async def entra_nel_dungeon(ctx):
+			await ctx.client.send_message(LOOTBOT, "Entra nel dungeon")
+		LOOP.add_task(entra_nel_dungeon, prio=True)
+
 """
 Main loop del dungeon
 """
