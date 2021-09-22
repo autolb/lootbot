@@ -59,7 +59,7 @@ async def main_menu_triggers(client, message):
 			LOOP.add_task(goto_rifugio)
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
-	r"Il tuo gnomo (?P<name>[A-Za-z]+) non è riuscito a raggiungere il rifugio nemico, dannazione!|" +
+	r"Il tuo gnomo (?P<name>Occhiofurbo|Piedelesto|Testacalda) non è riuscito a raggiungere il rifugio nemico, dannazione!|" +
 	r"La tua combinazione di rune \((?P<me>[0-9]+)\) è (?:migliore|peggiore) di quella del guardiano \((?P<other>[0-9]+)\)!"
 ), group=53)
 async def riavvia_ispezione(client, message):
@@ -129,9 +129,9 @@ async def scegli_gnomo(client, message):
 				await ctx.client.send_message(LOOTBOT, "Matchmaking (§)")
 			LOOP.add_task(re_matchmaking, prio=True)
 			LOOP.state["ispezione"]["matchmaking"] += 1
-		
+
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
-	r"Il tuo gnomo (?P<name>[A-Za-z]+) è arrivato al rifugio nemico, il guardiano del cancello ti propone uno strano gioco con le Rune"
+	r"Il tuo gnomo (?P<name>Occhiofurbo|Piedelesto|Testacalda) è arrivato al rifugio nemico, il guardiano del cancello ti propone uno strano gioco con le Rune"
 ), group=53)
 async def ispezione_successo(client, message):
 	if CONFIG()["ispezione"]["auto"]:
@@ -143,7 +143,7 @@ async def ispezione_successo(client, message):
 		LOOP.add_task(start_game)
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
-	r"Il tuo gnomo (?P<name>[A-Za-z]+) ha terminato la raccolta delle rune|Il tuo gnomo (?P<name>[A-Za-z]+) ha cambiato le rune richieste"
+	r"Il tuo gnomo (?P<name>Occhiofurbo|Piedelesto|Testacalda) ha terminato la raccolta delle rune|Il tuo gnomo (?P<name>Occhiofurbo|Piedelesto|Testacalda) ha cambiato le rune richieste"
 ), group=53)
 async def game_is_ready(client, message):
 	if CONFIG()["ispezione"]["auto"]:
@@ -200,5 +200,4 @@ async def game_event(client, message):
 		await random_wait()
 		await mnu(ctx)
 	LOOP.add_task(change_runes, prio=True)
-	
-	
+
