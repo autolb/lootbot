@@ -165,7 +165,7 @@ async def show_map_command(client, message):
 					out += cell + " "
 			out += "\n"
 		out += f"❤️ {mapstate['hp']} 🔩 {mapstate['rottami']} 💰 {mapstate['cash']}\n"
-		out += f"👥 {mapstate['opponents']['left']} 👣 {mapstate['cariche']} "
+		out += f"👥 {mapstate['opponents']['left']} 👣 {mapstate['cariche']} ☠️ {mapstate['zone-time']} min"
 		# # would be cool to show this but it's not really kept up-to-date
 		# for gear in mapstate["inventory"]:
 		#	  out += f"` · ` {gear}\n"
@@ -259,7 +259,7 @@ async def manual_map_move(client, message): # This is needed to set map as runni
 		logger.info("Player moved manually in map : %s", message.text)
 		LOOP.state["map"]["player"] = calc_player_move(LOOP.state["map"]["player"], char_to_vec(message.text))
 
-STATUS_CHECK = re.compile(r"👥 (?P<left>[0-9]+) su (?P<max>[0-9]+) sopravvissuti\n❤️ (?P<hp>[0-9\.]+)\n👣 (?:(?P<cariche>[0-9]+) cariche|Cariche esaurite)\n(?:☠️ (?:meno di |)(?P<time>[0-9]+) minut(?:o|i)\n|)(?:🔋 (?P<boost>[0-9]+)\n|)\n(?P<board>[📍◼️◻️💰🕳💊🔁💸✨👣🔩☠️💨⚡️🔋💥 \n]+)")
+STATUS_CHECK = re.compile(r"👥 (?P<left>[0-9]+) su (?P<max>[0-9]+) sopravvissuti\n❤️ (?P<hp>[0-9\.]+)\n👣 (?:(?P<cariche>[0-9]+) caric(?:he|a)|Cariche esaurite)\n(?:☠️ (?:meno di |)(?P<time>[0-9]+) minut(?:o|i)\n|)(?:🔋 (?P<boost>[0-9]+)\n|)\n(?P<board>[📍◼️◻️💰🕳💊🔁💸✨👣🔩☠️💨⚡️🔋💥 \n]+)")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"👥 (?P<left>[0-9]+) su (?P<max>[0-9]+) sopravvissuti"), group=45)
 async def map_screen(client, message):
 	match = STATUS_CHECK.search(message.text)
@@ -281,6 +281,7 @@ async def map_screen(client, message):
 			mapstate["board"] = b
 		mapstate["player"] = pl
 		mapstate["locations"] = Destinations(mapstate["board"], pl, safe=mapstate["safe"])
+		mapstate["zone-time"] = int(match["time"])
 		if match["cariche"]:
 			mapstate["cariche"] = int(match["cariche"])
 			mapstate["safe"] = mapstate["cariche"] <= CONFIG()["mappe"]["ai"]["min-cariche-safe"]
