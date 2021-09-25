@@ -9,14 +9,14 @@ from pyrogram import filters
 
 from bot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, CONFIG, random_wait
+from plugins.lootbot.common import LOOTBOT, CONFIG, random_wait, Priorities as P
 from plugins.lootbot.tasks import mnu, rifugio
 from plugins.lootbot.loop import LOOP, create_task
 
 from plugins.lootbot.tasks.dungeon import dungeon
 from plugins.lootbot.tasks.missioni import missione
 
-@alemiBot.on_message(group=42069)
+@alemiBot.on_message(group=P.last)
 async def sync_state(client, message):
 	if not CONFIG()["sync"]["auto"]:
 		return
@@ -44,7 +44,7 @@ async def sync_state(client, message):
 
 STATS_MENU_CHECK = re.compile(r"(?P<rinascita>✨|🔆|💫|⭐️|🌟|🎖) (?P<lvl>[0-9]+) (❤️|🧡|.) (?P<hp>[0-9\.]+)\/(?P<maxhp>[0-9\.]+)\n💰 (?P<cash>[0-9\.]+) §")
 @alemiBot.on_message(filters.chat(LOOTBOT) &
-	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=70)
+	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=P.stats)
 async def main_menu_triggers(client, message):
 	match = STATS_MENU_CHECK.search(message.text)
 	if match:
@@ -60,7 +60,7 @@ DRAGON_CHECK = re.compile(r"\n\n(?P<name>.+) (?P<type>Infernale|dei Cieli|dell'O
 ABILITIES_CHECK = re.compile(r"Altro 💱\nAbilità: (?P<abil>[0-9\.]+)\n.*\n(?:Artefatti: (?P<artifacts>[^ ]+)\n|)(?:Registrato il .*\n|)(?:Figurine diverse: (?P<figurine>.*)\n|)Rango: (?P<rankname>.*) \((?P<rank>[0-9]+)\)(?:\nIncarichi: (?P<incarichi>[0-9\.]+)(?:\n|)|)")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"(?:Giocatore|Giocatrice) (?P<class>[🦊🐅🐲🦍🦅🕊	🦏🦉🐓 ]+)\n(?P<fuckcompositeemojis>🏃‍♂️|🏃‍♀️) (?P<name>[a-zA-Z0-9_]+)(?: |)(?P<title>.*)\n"
-), group=70)
+), group=P.stats)
 async def scheda_giocatore(client, message):
 	if not LOOP.state["me"]["username"]:
 		LOOP.state["me"]["username"] = (await client.get_me()).username
@@ -103,7 +103,7 @@ BAG_CHECK = re.compile(r"Monete: (?P<cash>[0-9\.]+) §\nGemme: (?P<gem>[0-9\.]+)
 MANA_CHECK = re.compile(r"Mana:\n> (?P<blu>[0-9\.]+) Blu 🌊\n> (?P<giallo>[0-9\.]+) Giallo ⚡️\n> (?P<rosso>[0-9\.]+) Rosso 🔥\n")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"(?P<name>[^ ]+), apri il tuo zaino ed al suo interno trovi:"
-), group=70)
+), group=P.stats)
 async def zaino_giocatore(client, message):
 	me = LOOP.state["me"]
 	match = BAG_CHECK.search(message.text)
@@ -119,11 +119,11 @@ async def zaino_giocatore(client, message):
 		me["mana"]["blu"] = int(match["blu"].replace(".", ""))
 		me["mana"]["giallo"] = int(match["giallo"].replace(".", ""))
 		me["mana"]["rosso"] = int(match["rosso"].replace(".", ""))
-		
+
 MESSAGGIO_CHECK = re.compile(r"Portando con sè un messaggio su una pergamena: (?P<msg>.+)")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Le pattuglie intorno al villaggio ci hanno avvisato che (?P<name>.+) ha spiato il tuo rifugio!"
-), group=70)
+), group=P.stats)
 async def spiata(client, message):
 	if CONFIG()["log"]["pin"]["spy"]:
 		await message.pin()
@@ -136,8 +136,8 @@ async def spiata(client, message):
 		if match:
 			text += "\n` → ` " + match["msg"]
 		await client.send_message(CONFIG()["log"]["group"], text)
-	
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Messaggio da"), group=70)
+
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Messaggio da"), group=P.stats)
 async def messaggio_diretto(client, message):
 	if CONFIG()["log"]["pin"]["dm"]:
 		await message.pin()
@@ -146,7 +146,7 @@ async def messaggio_diretto(client, message):
 	pattern=r"Hai ricevuto|" +
 			r"In mezzo ai mucchi trovi un Kit Fuga!|" +
 			r"Le miniere sono state chiuse, hai ricevuto"
-), group=70)
+), group=P.stats)
 async def hai_ricevuto(client, message):
 	if CONFIG()["log"]["pin"]["reward"]:
 		await message.pin()

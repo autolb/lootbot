@@ -5,7 +5,7 @@ from pyrogram import filters
 
 from bot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, MAPMATCHERBOT, random_wait, CONFIG
+from plugins.lootbot.common import LOOTBOT, MAPMATCHERBOT, random_wait, CONFIG, Priorities as P
 from plugins.lootbot.tasks import si, no, mnu
 from plugins.lootbot.loop import LOOP, create_task
 
@@ -44,14 +44,14 @@ async def prosegui_dungeon(ctx):
 Dungeon start events
 """
 # Full heal, Dungeon Rush
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai ricaricato tutta la salute"), group=71)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai ricaricato tutta la salute"), group=P.dung)
 async def random_heal(client, message): # Cura, aggiorna vita e se in Dungeon Rush, riprendi
 	LOOP.state["me"]["hp"] = LOOP.state["me"]["maxhp"]
 	if LOOP.state["dungeon"]["rush"] and not LOOP.state["dungeon"]["running"]:
 		LOOP.add_task(create_task("Avvia Dungeon (Rush)", client=client)(dungeon))
 
 # Cooldown
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"I dungeon sono di nuovo disponibili"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"I dungeon sono di nuovo disponibili"), group=P.dung)
 async def dungeon_fuori_cooldown(client, message):
 	LOOP.state["dungeon"]["cooldown"] = False
 	if CONFIG()["dungeon"]["start"] and not LOOP.state["dungeon"]["running"] \
@@ -59,7 +59,7 @@ async def dungeon_fuori_cooldown(client, message):
 		LOOP.add_task(create_task("Avvia Dungeon", client=client)(dungeon))
 
 # Max cariche
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"L'Energia Esplorativa è carica al massimo"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"L'Energia Esplorativa è carica al massimo"), group=P.dung)
 async def energia_al_massimo(client, message):
 	LOOP.state["dungeon"]["cariche"] = LOOP.state["dungeon"]["maxcariche"]
 	if not LOOP.state["dungeon"]["running"] and not LOOP.state["dungeon"]["cooldown"] and CONFIG()["dungeon"]["auto"]:
@@ -71,7 +71,7 @@ DUNGEON_RUNNING = re.compile(r"❗️ Esplora il dungeon \((?:Stanza (?P<room>[0
 DUNGEON_RESTART = re.compile(r"Entra in un dungeon")
 DUNGEON_COOLDOWN_CHECK = re.compile(r"Attesa dungeon fino alle")
 @alemiBot.on_message(filters.chat(LOOTBOT) &
-	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=150) # Resume doing dungeons after anything else: dungeons take a while!
+	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=P.dung) # Resume doing dungeons after anything else: dungeons take a while!
 async def main_menu_triggers(client, message): # TODO maybe move main menu tasks in their respective task files?
 	LOOP.state["dungeon"]["running"] = False
 	LOOP.state["dungeon"]["interrupt"] = False
@@ -112,7 +112,7 @@ async def main_menu_triggers(client, message): # TODO maybe move main menu tasks
 			LOOP.add_task(create_task("Check + restart dungeon", client=client)(dungeon))
 
 # Prova a usare sempre un varco se in cooldown se auto-varco on, al peggio torni poi al menu
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Puoi tornare nei dungeon alle .*!"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Puoi tornare nei dungeon alle .*!"), group=P.dung)
 async def dungeon_in_cooldown(client, message):
 	LOOP.state["dungeon"]["cooldown"] = True
 	if CONFIG()["dungeon"]["start"]:
@@ -127,7 +127,7 @@ async def dungeon_in_cooldown(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Puoi tornare nei dungeon alle .*Ne possiedi (?P<owned>[0-9]+)(?:, puoi utilizzarli ancora (?P<uses>[0-9]+) volte|)",
 	flags=re.DOTALL
-), group=50)
+), group=P.dung)
 async def usa_varco_temporale(client, message):
 	if CONFIG()["dungeon"]["start"]:
 		m = message.matches[0].groupdict()
@@ -148,7 +148,7 @@ async def usa_varco_temporale(client, message):
 		else:
 			LOOP.add_task(create_task("Non usare Varco Temporale", client=client)(mnu))
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Mappatura team per l'istanza"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Mappatura team per l'istanza"), group=P.dung)
 async def messaggio_mappatura(client, message):
 	if CONFIG()["dungeon"]["mapmatcher"]:
 		await message.forward(MAPMATCHERBOT)
@@ -156,7 +156,7 @@ async def messaggio_mappatura(client, message):
 """
 Cariche esplorative
 """
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai ottenuto (?P<n>[0-9]+) Cariche Esplorative"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai ottenuto (?P<n>[0-9]+) Cariche Esplorative"), group=P.dung)
 async def cariche_a_caso(client, message):
 	dung = LOOP.state["dungeon"]
 	if dung["cariche"] == {}:
@@ -169,7 +169,7 @@ async def cariche_a_caso(client, message):
 		dung["wait-cariche"] = 0
 		LOOP.add_task(create_task("Riprendi Dungeon", client=client)(dungeon))
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non hai abbastanza energia per"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non hai abbastanza energia per"), group=P.dung)
 async def basta_dungeon(client, message): # Finita la carica per proseguire il dungeon
 	LOOP.state["dungeon"]["wait-cariche"] = 10
 	if CONFIG()["dungeon"]["auto"]:
@@ -178,7 +178,7 @@ async def basta_dungeon(client, message): # Finita la carica per proseguire il d
 """
 Sta venendo avviato un nuovo dungeon, scegli o il primo o di generarne un'altro
 """
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Benvenut. nella Sala di Ritrovo degli Esploratori"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Benvenut. nella Sala di Ritrovo degli Esploratori"), group=P.dung)
 async def sala_ritrovo_esploratori(client, message):
 	if CONFIG()["dungeon"]["start"]:
 		@create_task("Avvia nuovo Dungeon", client=client, title=message.reply_markup.keyboard[1][0]) # TODO don't auto choose 1st choice
@@ -187,7 +187,7 @@ async def sala_ritrovo_esploratori(client, message):
 		LOOP.add_task(start_dungeon, prio=True)
 
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Seleziona una variante di dungeon esistente o creane una nuova"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Seleziona una variante di dungeon esistente o creane una nuova"), group=P.dung)
 async def scegli_istanza_dungeon(client, message):
 	if CONFIG()["dungeon"]["start"]:
 		kb = message.reply_markup.keyboard
@@ -208,7 +208,7 @@ async def scegli_istanza_dungeon(client, message):
 			await mnu(ctx)
 		LOOP.add_task(choose_dungeon_variant, prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il dungeon è stato creato"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il dungeon è stato creato"), group=P.dung)
 async def dungeon_creato_entraci(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Entra nel dungeon", client=client)
@@ -222,7 +222,7 @@ Main loop del dungeon
 MAPPATURA = re.compile(r"🗺 Mappatura (?:\(team\)|)\n(?P<left>.*) \| (?P<up>.*) \| (?P<right>.*)")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
 	r"(?:🛡 |.) (?P<room>[0-9]+)\/(?P<tot>[0-9]+)\n(?:⏱ |.) (?P<time>.*)\n(?:🔋|.) (?P<charge>[0-9]+|∞)\/(?P<maxchrg>[0-9]+)\n(?:❤️|🧡|🖤)(?: |)(?P<hp>[0-9\.]+) hp"
-), group=50)
+), group=P.dung)
 async def dungeon_main_screen(client, message):
 	# Parse state from Dungeon main screen
 	match = message.matches[0]
@@ -318,7 +318,7 @@ async def dungeon_main_screen(client, message):
 """
 FIGHT
 """
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non disponi di pozioni per recuperare salute"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non disponi di pozioni per recuperare salute"), group=P.dung)
 async def no_more_pozze(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		CONFIG()["dungeon"]["auto"] = False # Changing player config is bad but this is a quite extreme case
@@ -328,7 +328,7 @@ async def no_more_pozze(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
 	r".*(Stai combattendo contro un mostro!|Incontri un(?:a|o|) (?P<name>.*) di livello (?P<lvl>[0-9]+)|" +
 	r"Hai colpito il mostro e hai inferto|Non hai inflitto danno al mostro|Il mostro ha evitato il tuo colpo!|Non sei riuscito a colpire il mostro)")
-, group=50)
+, group=P.dung)
 async def attaccalo(client, message): # Vai al combattimento
 	args = message.matches[0].groupdict()
 	if "name" in args and args["name"]:
@@ -360,7 +360,7 @@ def cast_for_impresa():
 			r"(?P<weapons>.*)\n\n(?:❤️|.) (?P<myhp>[0-9\.]+) hp(?: (?:🤍|🖤|.) " +
 			r"(?P<mylif>[0-9]+)\/(?P<mymaxlif>[0-9]+)|)\n(?P<mystate>.*)",
 	flags=re.DOTALL
-), group=50)
+), group=P.dung)
 async def dentro_al_fight(client, message): # Schermata principale
 	m = message.matches[0]
 	fight = {
@@ -408,7 +408,7 @@ async def dentro_al_fight(client, message): # Schermata principale
 				LOOP.add_task(attack, prio=True)
 
 NO_SPELLS = re.compile(r"Non possiedi alcun incantesimo, puoi ottenerli attraverso la Sintesi!")
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"^Incantesimi:"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"^Incantesimi:"), group=P.dung)
 async def scegli_incantesimo(client, message):
 	if CONFIG()["dungeon"]["auto"] and (CONFIG()["dungeon"]["spell"]["auto"] or cast_for_impresa()):
 		rateo = CONFIG()["dungeon"]["spell"]["rateo"]
@@ -433,17 +433,17 @@ async def scegli_incantesimo(client, message):
 				await ctx.client.send_message(LOOTBOT, ctx.spell)
 			LOOP.add_task(cast_spell, prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non hai abbastanza mana di quel tipo"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non hai abbastanza mana di quel tipo"), group=P.dung)
 async def non_abbastanza_mana(client, message):
 	LOOP.state["cast"]["stop"] = True
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Iniziare la sintesi utilizzando le unità selezionate?"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Iniziare la sintesi utilizzando le unità selezionate?"), group=P.dung)
 async def sicuro_della_sintesi(client, message):
 	LOOP.state["cast"]["stop"] = False
 	if CONFIG()["dungeon"]["auto"] and (CONFIG()["dungeon"]["spell"]["auto"] or cast_for_impresa()):
 		LOOP.add_task(create_task("Conferma Sintesi", client=client)(si), prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai sintetizzato"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai sintetizzato"), group=P.dung)
 async def sintesi_completata(client, message):
 	LOOP.state["cast"]["stop"] = False
 	if CONFIG()["dungeon"]["auto"] and (CONFIG()["dungeon"]["spell"]["auto"] or cast_for_impresa()):
@@ -452,11 +452,11 @@ async def sintesi_completata(client, message):
 			await ctx.client.send_message(LOOTBOT, "Torna al dungeon")
 		LOOP.add_task(finished_synth, prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Sei arrivato alla stanza finale"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Sei arrivato alla stanza finale"), group=P.dung)
 async def dungeon_completato(client, message):
 	LOOP.state["dungeon"]["boss"] = True
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai ucciso il mostro"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai ucciso il mostro"), group=P.dung)
 async def vinto_fight(client, message): # Ucciso il mostro
 	if CONFIG()["dungeon"]["auto"]:
 		if LOOP.state["dungeon"]["boss"]:
@@ -469,7 +469,7 @@ async def vinto_fight(client, message): # Ucciso il mostro
 """
 Dead
 """
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non puoi entrare nel dungeon da esausto"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non puoi entrare nel dungeon da esausto"), group=P.dung)
 async def sono_morto_pd(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Torna in Vita", client=client)
@@ -480,7 +480,7 @@ async def sono_morto_pd(client, message):
 		await message.pin()
 
 BTN_CHECK = re.compile(r"Intervento Divino \((?P<n>[0-9])\)")
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Vuoi usare una Piuma di Fenice, una Cenere di Fenice"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Vuoi usare una Piuma di Fenice, una Cenere di Fenice"), group=P.dung)
 async def come_resuscitare(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		kb = [ btn for sub in message.reply_markup.keyboard for btn in sub ]
@@ -500,7 +500,7 @@ async def come_resuscitare(client, message):
 Below are dungeon events with their triggers
 """
 # Stanza Vuota
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Entri in una stanza apparentemente vuota, cosa fai?"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Entri in una stanza apparentemente vuota, cosa fai?"), group=P.dung)
 async def stanza_vuota(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Stanza vuota, prosegui", client=client)
@@ -511,7 +511,7 @@ async def stanza_vuota(client, message):
 		LOOP.add_task(prosegui, prio=True)
 
 # Vicolo Cieco
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r".*Questo è un vicolo cieco.*", flags=re.DOTALL), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r".*Questo è un vicolo cieco.*", flags=re.DOTALL), group=P.dung)
 async def devi_tornare_indietro(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Vicolo cieco (dungeon)", client=client)
@@ -525,7 +525,7 @@ async def devi_tornare_indietro(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r".*uomo ferito e sanguinante|una donna impaurita|angolo una ragazza|un anziano dolorante|un bambino che piange.*",
 	flags=re.DOTALL)
-, group=50)
+, group=P.dung)
 async def persona_in_pericolo(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Aiuta persona (dungeon)", client=client)
@@ -541,7 +541,7 @@ async def persona_in_pericolo(client, message):
 			r".*(propone una partita ai dadi|oggetti a buon prezzo|un uomo magro con un cappello|una stanza piena di esplosivi|immenso drago di LastSoldier95).*|" +
 			r"Sull'angolo della stanza noti un uomo magro con un cappello a forma di Bomba",
 	flags=re.DOTALL
-), group=50)
+), group=P.dung)
 async def ignora_e_prosegui(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Ignora stanza (dungeon)", client=client)
@@ -555,7 +555,7 @@ async def ignora_e_prosegui(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r".*vedi un mucchietto di monete|Nella stanza sembra esserci uno scrigno.*",
 	flags=re.DOTALL
-), group=50)
+), group=P.dung)
 async def prendi_il_loot(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Prendi loot (dungeon)", client=client)
@@ -565,7 +565,7 @@ async def prendi_il_loot(client, message):
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Hai trovato uno Scrigno! Ma appena lo tocchi"
-), group=50)
+), group=P.dung)
 async def bad_loot(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Mostro, attacca (dungeon)", client=client)
@@ -575,7 +575,7 @@ async def bad_loot(client, message):
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Hai trovato [0-9]+x|Aprendo uno strano scrigno hai trovato|Corri verso il mucchietto"
-), group=50)
+), group=P.dung)
 async def good_loot(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		LOOP.add_task(create_task("Era effettivamente loot (dungeon)",
@@ -584,7 +584,7 @@ async def good_loot(client, message):
 # Fontana di Mana
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Appena entrato nella stanza noti subito una strana fontana situata nel centro"
-), group=50)
+), group=P.dung)
 async def fontana_mana(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Fontana di Mana (dungeon)", client=client)
@@ -594,7 +594,7 @@ async def fontana_mana(client, message):
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Ti avvicini alla fontana e vedi che l'acqua"
-), group=50)
+), group=P.dung)
 async def fontana_good(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		LOOP.add_task(create_task("Ricevuto mana, prosegui dungeon",
@@ -602,7 +602,7 @@ async def fontana_good(client, message):
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Ti avvicini alla fontana per esaminarla meglio"
-), group=50)
+), group=P.dung)
 async def fontana_fight(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Mostro nella fontana, attacca (dungeon)", client=client)
@@ -611,7 +611,7 @@ async def fontana_fight(client, message):
 		LOOP.add_task(no_loot_only_monster, prio=True)
 
 # Pozzo monete
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Una luce esagerata ti avvolge"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Una luce esagerata ti avvolge"), group=P.dung)
 async def posso_di_monete(client, message):
 	# non provare a pescare che perdi cash
 	if CONFIG()["dungeon"]["auto"]:
@@ -623,7 +623,7 @@ async def posso_di_monete(client, message):
 		LOOP.add_task(paga_pozzo, prio=True)
 
 # Stanza piena di Polvere
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Entri in una stanza completamente piena di polvere"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Entri in una stanza completamente piena di polvere"), group=P.dung)
 async def stanza_di_polvere(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		if CONFIG()["dungeon"]["polvere"] or LOOP.state["dungeon"]["rush"] \
@@ -640,19 +640,19 @@ async def stanza_di_polvere(client, message):
 				await prosegui_dungeon(ctx)
 			LOOP.add_task(ignora_polvere, prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Inizi a spolverare, consumi"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Inizi a spolverare, consumi"), group=P.dung)
 async def spolverata_stanza(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		LOOP.add_task(create_task("Spolverato", client=client)(prosegui_dungeon), prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non hai abbastanza Cariche Esplorative per spolverare, te ne servono (?P<n>[0-9]+)!"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non hai abbastanza Cariche Esplorative per spolverare, te ne servono (?P<n>[0-9]+)!"), group=P.dung)
 async def non_abbastanza_cariche_per_spolverare(client, message):
 	LOOP.state["dungeon"]["wait-cariche"] = int(message.matches[0]["n"])
 	if CONFIG()["dungeon"]["auto"]:
 		LOOP.add_task(create_task("Aspetta cariche per spolverare", client=client)(mnu), prio=True)
 
 # Porta Misteriosa
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Oltrepassando la porta ti trovi davanti ad altre due porte, una con un'aria familiare"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Oltrepassando la porta ti trovi davanti ad altre due porte, una con un'aria familiare"), group=P.dung)
 async def stanza_porta_misteriosa(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		porta = "Misteriosa"
@@ -666,7 +666,7 @@ async def stanza_porta_misteriosa(client, message):
 		LOOP.add_task(scegli_porta, prio=True)
 
 # Ey amico sai chi sono
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r".*Si presenta così un tipo strano in un angolino della stanza"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r".*Si presenta così un tipo strano in un angolino della stanza"), group=P.dung)
 async def ey_amico_sai_chi_sono(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Ey amico sai chi sono", client=client)
@@ -680,7 +680,7 @@ async def ey_amico_sai_chi_sono(client, message):
 GOD_ITEM = re.compile("(?i).* di (?:Xocotl|Hydros|Hoenir|Phoenix|Loki|Odino|Thor|Efesto|Zeus|Poseidone)")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Spalancata la porta della stanza vieni sbalzato all'indietro da una potentissima energia magica"
-), group=50)
+), group=P.dung)
 async def potentissima_energia_magica(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		choice = "Passi di fianco"
@@ -700,7 +700,7 @@ async def potentissima_energia_magica(client, message):
 STANZA_CHECK = re.compile(r"(?P<n>[0-9])\. Stanza (?P<dest>[0-9]+) \((?P<dir>.*)\): (?P<name>.*)")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
 	r"In questa stanza non noti nessuna porta, al loro posto 3 incisioni con un pulsante ciascuna"
-), group=50)
+), group=P.dung)
 async def stanza_tre_incisioni(client, message):
 	kb = message.reply_markup.keyboard
 	tasti = []
@@ -750,19 +750,19 @@ async def stanza_tre_incisioni(client, message):
 			await prosegui_dungeon(ctx)
 		LOOP.add_task(prova_incisione, prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Premi un pulsante ma sul muro appare un messaggio con scritto"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Premi un pulsante ma sul muro appare un messaggio con scritto"), group=P.dung)
 async def incisione_sbagliata(client, message): # Incisione sbagliata!
 	if LOOP.state["dungeon"]["incisioni"]["sbagliate"] == {}:
 		LOOP.state["dungeon"]["incisioni"]["sbagliate"] = []
 	LOOP.state["dungeon"]["incisioni"]["sbagliate"].append(LOOP.state["dungeon"]["incisioni"]["scelta"])
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Premi un pulsante e sul muro appare un messaggio con scritto"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Premi un pulsante e sul muro appare un messaggio con scritto"), group=P.dung)
 async def incisione_giusta(client, message): # Incisione corretta!
 	LOOP.state["dungeon"]["incisioni"]["sbagliate"] = []
 
 # Spada Conficcata
 ACCUMULO_CHECK = re.compile(r"Fin ora hai accumulato (?P<acc>[0-9\.]+) § per la probabilità del (?P<n>[0-9]+)% di rischiare la vita")
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Entri in una stanza piena d'oro luccicante e una spada"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Entri in una stanza piena d'oro luccicante e una spada"), group=P.dung)
 async def spada_conficcata(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		m = ACCUMULO_CHECK.search(message.text)
@@ -783,7 +783,7 @@ async def spada_conficcata(client, message):
 
 # Stanza Bottoni Ghiacciati
 HP_CHECK = re.compile(r"(?:❤️|.) (?P<hp>[0-9\.]+) hp")
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Appena aperta la porta della stanza, un freddo polare ti avvolge"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Appena aperta la porta della stanza, un freddo polare ti avvolge"), group=P.dung)
 async def stanza_bottoni_ghiacciati(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		LOOP.state["me"]["hp"] = int(HP_CHECK.search(message.text)["hp"].replace("." , ""))
@@ -809,13 +809,13 @@ async def stanza_bottoni_ghiacciati(client, message):
 				await prosegui_dungeon(ctx)
 			LOOP.add_task(prova_pulsante, prio=True)
 			
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai trovato il pulsante corretto! Prosegui alla prossima stanza"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai trovato il pulsante corretto! Prosegui alla prossima stanza"), group=P.dung)
 async def bottone_corretto(client, message):
 	LOOP.state["dungeon"]["pulsanti-provati"] = []
 
 # Stanza del cuore e dello Spirito
 CONCENTRAZIONI_CHECK = re.compile(r"Fin ora ti sei concentrato (?P<n>[0-9]) volte")
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Raggiungi una stanza completamente trasparente, sembra quasi fluttuare nel cielo"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Raggiungi una stanza completamente trasparente, sembra quasi fluttuare nel cielo"), group=P.dung)
 async def stanza_del_cuore_e_dello_spirito(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		conc = 0
@@ -836,7 +836,7 @@ async def stanza_del_cuore_e_dello_spirito(client, message):
 
 # Stanza della meditazione profonda
 MEDITAZIONI_CHECK = re.compile(r"Fin ora hai meditato (?P<n>[0-9]) volte")
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Raggiungi una stanza con un'incisione profonda: Stanza della Meditazione"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Raggiungi una stanza con un'incisione profonda: Stanza della Meditazione"), group=P.dung)
 async def stanza_della_meditazione(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		med = 0
@@ -858,13 +858,13 @@ async def stanza_della_meditazione(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Ti sei concentrato|Per la concentrazione prolungata|Ti senti talmente pronto da non necessitare|" +
 			r"Inizi una profonda meditazione|Per la meditazione prolungata|Affamato d’azione, decidi di non perdere tempo"
-), group=50)
+), group=P.dung)
 async def concentrato_o_meditato(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		LOOP.add_task(create_task("Meditato/Concentrato, prosegui", client=client)(prosegui_dungeon), prio=True)
 
 # Non abbastanza cariche, torna al menu
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non hai abbastanza Cariche Esplorative, ne servono (?P<n>[0-9]+)"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non hai abbastanza Cariche Esplorative, ne servono (?P<n>[0-9]+)"), group=P.dung)
 async def troppe_poche_cariche(client, message):
 	LOOP.state["dungeon"]["wait-cariche"] = int(message.matches[0]["n"])
 	if CONFIG()["dungeon"]["auto"]:
@@ -874,7 +874,7 @@ async def troppe_poche_cariche(client, message):
 STANZE CON DAILIES
 """
 # Brucaliffo
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Tra una fitta coltre di fumo grigio appare un maestoso brucaliffo"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Tra una fitta coltre di fumo grigio appare un maestoso brucaliffo"), group=P.dung)
 async def regala_al_brucaliffo_per_daily(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		if CONFIG()["imprese"]["auto"] and "Io non me ne vado" in LOOP.state["imprese"]["todo"]:
@@ -900,7 +900,7 @@ async def regala_al_brucaliffo_per_daily(client, message):
 ITEM_SEARCH = re.compile(r"in cambio di un particolare oggetto, in questo caso: (?P<item>[^✅☑️]+)(?: (?P<state>✅|☑️)|), accetti")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Entri in una stanza completamente luccicante, quasi accecante" # Gioielliere
-), group=50)
+), group=P.dung)
 async def acquista_dal_gioielliere_daily(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		if CONFIG()["imprese"]["auto"] and "Un prezioso scambio" in LOOP.state["imprese"]["todo"]:
@@ -940,7 +940,7 @@ async def acquista_dal_gioielliere_daily(client, message):
 OGGETTO_ALCHIMISTA = re.compile(r"scambieresti il tuo (?P<item>[^✅☑️]+)(?: (?P<state>✅|☑️|)|) per (?P<trade>.*)?")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Non fai che un passo, una voce mite ma ferma ti paralizza"
-), group=50)
+), group=P.dung)
 async def alchimista_dell_ovest_daily(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		if CONFIG()["imprese"]["auto"] and "Assetato" in LOOP.state["imprese"]["todo"]:
@@ -977,7 +977,7 @@ async def alchimista_dell_ovest_daily(client, message):
 			LOOP.add_task(ignore_alch, prio=True)
 
 # Vecchina
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Aprendo la porta ti ritrovi in un ambiente aperto, con alberi e liane"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Aprendo la porta ti ritrovi in un ambiente aperto, con alberi e liane"), group=P.dung)
 async def stanza_con_vecchia_signora(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		if CONFIG()["imprese"]["auto"] and "Assetato" in LOOP.state["imprese"]["todo"]:
@@ -999,7 +999,7 @@ async def stanza_con_vecchia_signora(client, message):
 OGGETTO_DRACONICO = re.compile(r"fornisce oggetti utili al proprio drago in cambio di (?P<qty>[0-9]+)x (?P<name>.*)(?: (?P<state>✅|)|)\.")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Entri in una stanza che non ha affatto le sembianze di una stanza, piuttosto un grosso parco" # Mercante Draconico
-), group=50)
+), group=P.dung)
 async def acquista_draconico_se_daily(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		match = OGGETTO_DRACONICO.search(message.text)
@@ -1020,7 +1020,7 @@ async def acquista_draconico_se_daily(client, message):
 			LOOP.add_task(no_merc_drac, prio=True)
 
 # Specchio
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Entri in una stanza con un piccolo specchio al centro. Ti avvicini"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Entri in una stanza con un piccolo specchio al centro. Ti avvicini"), group=P.dung)
 async def stanza_con_specchio_magico(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		if CONFIG()["imprese"]["auto"] and "Fissato con le pulizie" in LOOP.state["imprese"]["todo"]:
@@ -1042,7 +1042,7 @@ async def stanza_con_specchio_magico(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Nella stanza incontri un predone del deserto dall'aria docile|" +   # Predone del deserto
 			r"Entri in un negozio stranamente elegante, con migliaia di Figurine" # Mercante di Figurine
-), group=50)
+), group=P.dung)
 async def interagisci_solo_se_daily(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Ignora interazione (no daily)", client=client)
@@ -1055,7 +1055,7 @@ async def interagisci_solo_se_daily(client, message):
 # Vecchio con occhi sbarrati
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Al centro della stanza vedi un signore anziano con gli occhi sbarrati"
-), group=50)
+), group=P.dung)
 async def vecchio_occhi_sbarrati(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		kb = message.reply_markup.keyboard
@@ -1077,7 +1077,7 @@ async def vecchio_occhi_sbarrati(client, message):
 			LOOP.add_task(vecchio_occhi_sbarrati, prio=True)
 
 # ???
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Davanti a te si erge un portale completamente rosso, una voce rimbomba"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Davanti a te si erge un portale completamente rosso, una voce rimbomba"), group=P.dung)
 async def portale_completamente_rosso(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("ESSERE RICCO SFONDATO!!!11!11!", client=client)
@@ -1088,7 +1088,7 @@ async def portale_completamente_rosso(client, message):
 		LOOP.add_task(essere_ricco_sfondato, prio=True)
 
 # Stanza divisa in due
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Raggiungi una stanza suddivisa in due"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Raggiungi una stanza suddivisa in due"), group=P.dung)
 async def stanza_divisa_in_due(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Stanza divisa, oggetto raro", client=client)
@@ -1099,7 +1099,7 @@ async def stanza_divisa_in_due(client, message):
 		LOOP.add_task(stanza_divisa, prio=True)
 
 # Fessura nel muro
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Questa stanza è strana, scorgi solamente una fessura sul muro"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Questa stanza è strana, scorgi solamente una fessura sul muro"), group=P.dung)
 async def stanza_con_fessura(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Inserisci monete nella fessura (dungeon)", client=client)
@@ -1110,7 +1110,7 @@ async def stanza_con_fessura(client, message):
 		LOOP.add_task(inserisci, prio=True)
 
 # Stanza con le leve
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il corridoio si stringe in un'umida strettoia, sembrerebbe un vicolo cieco!"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il corridoio si stringe in un'umida strettoia, sembrerebbe un vicolo cieco!"), group=P.dung)
 async def stanza_con_le_leve(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		choice = random.choice([ "Sinistra", "Centro", "Destra" ])
@@ -1122,7 +1122,7 @@ async def stanza_con_le_leve(client, message):
 		LOOP.add_task(lever_room, prio=True)
 
 # Ascia Gigante
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Un cartello con un punto esclamativo ti preoccupa, al centro della stanza c'è un taglio"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Un cartello con un punto esclamativo ti preoccupa, al centro della stanza c'è un taglio"), group=P.dung)
 async def stanza_ascia_gigante(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		@create_task("Ascia gigante (dungeon)", client=client)
@@ -1133,7 +1133,7 @@ async def stanza_ascia_gigante(client, message):
 		LOOP.add_task(ascia, prio=True)
 
 # Maledizione Unna
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Entrando nella stanza pesti una leva nascosta, la maledizione Unna t'ha colpito"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Entrando nella stanza pesti una leva nascosta, la maledizione Unna t'ha colpito"), group=P.dung)
 async def maledizione_unna(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		LOOP.add_task(create_task("Maledizione Unna! (dungeon)", client=client)(prosegui_dungeon))
@@ -1145,7 +1145,7 @@ async def maledizione_unna(client, message):
 			r"Uno strano pulsante rosso come un pomodoro ti incuriosisce|" +
 			r"Vedi un Nano della terra di Grumpi|" +
 			r"Hai schivato con destrezza una trappola piazzata" # Unica positiva 
-), group=50)
+), group=P.dung)
 async def trappola(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		LOOP.add_task(create_task("Trappola (dungeon)", client=client)(prosegui_dungeon))

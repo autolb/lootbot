@@ -9,7 +9,7 @@ from util.permission import is_superuser
 from util.command import filterCommand
 
 from plugins.lootbot.tasks import mnu
-from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG
+from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG, Priorities as P
 from plugins.lootbot.loop import LOOP, create_task
 
 MSG = None
@@ -37,12 +37,12 @@ async def auto_palle_neve(client, message):
 		MSG = await edit_or_reply(message, "` → ` Avvio loop in corso...")
 
 @alemiBot.on_message(filters.chat(LOOTBOT) &
-	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=61)
+	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=P.snow)
 async def tornato_al_menu(client, message):
 	if LOOP.state["snow"]["target"]:
 		LOOP.add_task(create_task("Torna alla casa", client=client)(return_to_casadineve))
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Benvenuto nella tua Casa nella Neve 🌨"), group=61)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Benvenuto nella tua Casa nella Neve 🌨"), group=P.snow)
 async def tira_palla_neve(client, message):
 	target = LOOP.state["snow"]["target"]
 	if target:
@@ -51,12 +51,12 @@ async def tira_palla_neve(client, message):
 			await ctx.client.send_message(LOOTBOT, "Lancia Palla di Neve ❄️")
 		LOOP.add_task(throw_snowball, prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non hai abbastanza Palle di Neve!"), group=61)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non hai abbastanza Palle di Neve!"), group=P.snow)
 async def no_palle_neve(client, message):
 	LOOP.state["snow"]["target"] = None
 	LOOP.add_task(create_task("Palle di neve insufficienti", client=client)(mnu), prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Puoi lanciare una Palla di Neve ad un giocatore in particolare"), group=61)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Puoi lanciare una Palla di Neve ad un giocatore in particolare"), group=P.snow)
 async def scegli_bersaglio_palla_neve(client, message):
 	target = LOOP.state["snow"]["target"]
 	if target:
@@ -65,7 +65,7 @@ async def scegli_bersaglio_palla_neve(client, message):
 			await ctx.client.send_message(LOOTBOT, ctx.target)
 		LOOP.add_task(choose_ball_target, prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai lanciato una Palla di Neve e hai colpito il Pupazzo di Neve di (?P<name>.+)"), group=61)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai lanciato una Palla di Neve e hai colpito il Pupazzo di Neve di (?P<name>.+)"), group=P.snow)
 async def colpito_pupazzo(client, message):
 	global MSG
 	target = LOOP.state["snow"]["target"]
@@ -77,7 +77,7 @@ async def colpito_pupazzo(client, message):
 		LOOP.state["snow"]["thrown"] += 2
 		await MSG.edit(f"`→ ` Attacco pupazzi di **@{LOOP.state['snow']['target']}**\n` → ` Lanciate --{LOOP.state['snow']['thrown']}-- palle") 
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai lanciato una Palla di Neve e hai colpito (?P<name>.+) che ha perso (?P<hp>[0-9\.]+) hp"), group=61)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai lanciato una Palla di Neve e hai colpito (?P<name>.+) che ha perso (?P<hp>[0-9\.]+) hp"), group=P.snow)
 async def uccisi_tutti_pupazzi(client, message):
 	global MSG
 	if LOOP.state["snow"]["target"]:

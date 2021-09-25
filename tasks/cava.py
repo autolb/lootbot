@@ -5,7 +5,7 @@ from pyrogram import filters
 
 from bot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG
+from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG, Priorities as P
 from plugins.lootbot.tasks import si, mnu
 from plugins.lootbot.loop import LOOP, create_task
 
@@ -27,13 +27,13 @@ CURRENT_INCARICO_CHECK = re.compile(r"Incarico in corso fino")
 CURRENT_CAVA_CHECK = re.compile(r"Esplorazione cava fino")
 ESTRAZIONE_CHECK = re.compile(r"⛏ Estrazione di Mana (?:Rosso|Giallo|Blu) in corso")
 @alemiBot.on_message(filters.chat(LOOTBOT) & autocava &
-	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=55)
+	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=P.cave)
 async def main_menu_triggers(client, message):
 	if len(LOOP) < 1 and not ESTRAZIONE_CHECK.search(message.text) and not CURRENT_MISSION_CHECK.search(message.text) \
 			and not CURRENT_CAVA_CHECK.search(message.text) and not CURRENT_INCARICO_CHECK.search(message.text):
 		LOOP.add_task(create_task("Got spare time for a cava?", client=client)(esplorazioni))
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai completato l'esplorazione della cava"), group=55)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai completato l'esplorazione della cava"), group=P.cave)
 async def riavvia_cava(client, message):
 	await asyncio.sleep(1) # The "daily done" msg comes after, so let's give lootbot 1 sec to send it
 	LOOP.state["dungeon"]["interrupt"] = True
@@ -49,11 +49,11 @@ async def riavvia_cava(client, message):
 			await mnu(ctx)
 		LOOP.add_task(equip_talismano_oculato)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & autocava & filters.regex(pattern=r"Non puoi andare in esplorazione"), group=55)
+@alemiBot.on_message(filters.chat(LOOTBOT) & autocava & filters.regex(pattern=r"Non puoi andare in esplorazione"), group=P.cave)
 async def cant_restart_cava(client, message):
 	LOOP.add_task(create_task("Non posso fare cave ora", client=client)(mnu), prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & autocava & filters.regex(pattern=r"Seleziona il viaggio o la cava da esplorare"), group=55)
+@alemiBot.on_message(filters.chat(LOOTBOT) & autocava & filters.regex(pattern=r"Seleziona il viaggio o la cava da esplorare"), group=P.cave)
 async def scegli_cava(client, message):
 	kb = [ btn for sub in message.reply_markup.keyboard for btn in sub ]
 	dest = CONFIG()["cava"]["name"]
@@ -68,7 +68,7 @@ async def scegli_cava(client, message):
 
 TALISMAN_CHECK = re.compile(r"Talismano bonus pietre: (?P<status>❌|✅)")
 RETURN_CHECK = re.compile(r"Puoi tornare ancora da (?P<viaggi>[0-9]+) viaggi e (?P<cave>[0-9]+) cave")
-@alemiBot.on_message(filters.chat(LOOTBOT) & autocava & filters.regex(pattern=r"Iniziare il viaggio?"), group=55)
+@alemiBot.on_message(filters.chat(LOOTBOT) & autocava & filters.regex(pattern=r"Iniziare il viaggio?"), group=P.cave)
 async def check_amuleto(client, message):
 	m = RETURN_CHECK.search(message.text)
 	if m:
@@ -88,7 +88,7 @@ async def check_amuleto(client, message):
 		LOOP.add_task(create_task("Ok, avvia cava", client=client)(si), prio=True)
 
 DIMEZZATO_CHECK = re.compile(r"dimezzat.!")
-@alemiBot.on_message(filters.chat(LOOTBOT) & autocava & filters.regex(pattern=r"(?:[^ ]+), ti aspetta (?P<loc>un'esplorazione|un incredibile viaggio)"), group=55)
+@alemiBot.on_message(filters.chat(LOOTBOT) & autocava & filters.regex(pattern=r"(?:[^ ]+), ti aspetta (?P<loc>un'esplorazione|un incredibile viaggio)"), group=P.cave)
 async def gemma_la_cava(client, message): # TODO allow to retreat from exploration rather than using gems!
 	loc = "cava" if message.matches[0]["loc"] == "un'esplorazione" else "viaggio"
 	dimezzato = DIMEZZATO_CHECK.search(message.text)
@@ -116,7 +116,7 @@ async def gemma_la_cava(client, message): # TODO allow to retreat from explorati
 			
 @alemiBot.on_message(filters.chat(LOOTBOT) & autocava & filters.regex(
 	pattern=r"Sicuro di voler terminare subito l'esplorazione della cava\? Ti costerà (?P<costo>[^ ]+) 💎\. Ne possiedi (?P<gemme>[0-9\.]+)"
-), group=55)
+), group=P.cave)
 async def aggiorna_numero_gemme(client, message):
 	cost = 4
 	if message.matches[0]["costo"] == "una":

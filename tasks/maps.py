@@ -13,7 +13,7 @@ from util.command import filterCommand
 from util.message import edit_or_reply
 from util.decorators import report_error, set_offline
 
-from plugins.lootbot.common import LOOTBOT, MAPMATCHERBOT, random_wait, CONFIG
+from plugins.lootbot.common import LOOTBOT, MAPMATCHERBOT, random_wait, CONFIG, Priorities as P
 from plugins.lootbot.tasks import si, no, mnu
 from plugins.lootbot.loop import LOOP, create_task
 
@@ -171,16 +171,16 @@ async def show_map_command(client, message):
 		#	  out += f"` · ` {gear}\n"
 	await edit_or_reply(message, out)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La partita (?:di allenamento |)è terminata!"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La partita (?:di allenamento |)è terminata!"), group=P.map)
 async def on_map_finished(client, message):
 	if CONFIG()["log"]["pin"]["map"]:
 		await message.pin()
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.me & filters.regex(pattern=r"Allenamento 🥋|Accedi alla Lobby 🏹"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.me & filters.regex(pattern=r"Allenamento 🥋|Accedi alla Lobby 🏹"), group=P.map)
 async def starting_map(client, message):
 	LOOP.state["map"]["train"] = message.text == "Allenamento 🥋"
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il tempo di ricerca nella lobby è scaduto, accedi di nuovo!"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il tempo di ricerca nella lobby è scaduto, accedi di nuovo!"), group=P.map)
 async def lobby_expired(client, message):
 	if CONFIG()["mappe"]["reque"]:
 		@create_task("Rientra in Lobby Mappe", client=client, train=bool(LOOP.state["map"]["train"]))
@@ -197,7 +197,7 @@ async def lobby_expired(client, message):
 
 MAIN_MENU_CHECK = re.compile(r"🗺 Puoi esplorare le Mappe(?: \(☠️ (?P<time>.*)\)|)")
 @alemiBot.on_message(filters.chat(LOOTBOT) &
-	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=45)
+	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=P.map)
 async def main_menu_trigger(client, message):
 	LOOP.state["map"]["running"] = False
 	match = MAIN_MENU_CHECK.search(message.text)
@@ -215,24 +215,24 @@ async def main_menu_trigger(client, message):
 			LOOP.add_task(start_map)
 			LOOP.state["map"]["train"] = False
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Esplorazione mappa in corso!"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Esplorazione mappa in corso!"), group=P.map)
 async def why_2_steps_to_open_map_ffs(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("Torna alla mappa", client=client)(torna_mappa))
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La mappa si è ristretta e le Cariche Movimento sono state ripristinate!"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La mappa si è ristretta e le Cariche Movimento sono state ripristinate!"), group=P.map)
 async def map_ready(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		if not CONFIG()["mappe"]["prio"]:
 			LOOP.state["dungeon"]["interrupt"] = True
 		LOOP.add_task(create_task("Torna alla mappa", client=client)(torna_mappa), prio=CONFIG()["mappe"]["prio"])
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai terminato le mosse a disposizione, attendi il prossimo restringimento"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai terminato le mosse a disposizione, attendi il prossimo restringimento"), group=P.map)
 async def no_more_moves(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("Finite le mosse", client=client)(mnu), prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La mappa è stata generata!"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La mappa è stata generata!"), group=P.map)
 async def map_generated(client, message):
 	LOOP.state["map"]["hp"] = 5000
 	LOOP.state["map"]["cash"] = 0
@@ -249,18 +249,18 @@ async def map_generated(client, message):
 			LOOP.state["dungeon"]["interrupt"] = True
 		LOOP.add_task(start_map, prio=CONFIG()["mappe"]["prio"])
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.me & filters.regex(pattern=r"Torna alla mappa"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.me & filters.regex(pattern=r"Torna alla mappa"), group=P.map)
 async def manual_map_open(client, message): # This is needed to set map as running in case user is playing manually
 	LOOP.state["map"]["running"] = True
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.me & filters.regex(pattern=r"^(?:⬆️|⬇️|⬅️|➡️)$"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.me & filters.regex(pattern=r"^(?:⬆️|⬇️|⬅️|➡️)$"), group=P.map)
 async def manual_map_move(client, message): # This is needed to set map as running in case user is playing manually
 	if LOOP.state["map"]["running"]:
 		logger.info("Player moved manually in map : %s", message.text)
 		LOOP.state["map"]["player"] = calc_player_move(LOOP.state["map"]["player"], char_to_vec(message.text))
 
 STATUS_CHECK = re.compile(r"👥 (?P<left>[0-9]+) su (?P<max>[0-9]+) sopravvissuti\n❤️ (?P<hp>[0-9\.]+)\n👣 (?:(?P<cariche>[0-9]+) caric(?:he|a)|Cariche esaurite)\n(?:☠️ (?:meno di |)(?P<time>[0-9]+) minut(?:o|i)\n|)(?:🔋 (?P<boost>[0-9]+)\n|)\n(?P<board>[📍◼️◻️💰🕳💊🔁💸✨👣🔩☠️💨⚡️🔋💥 \n]+)")
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"👥 (?P<left>[0-9]+) su (?P<max>[0-9]+) sopravvissuti"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"👥 (?P<left>[0-9]+) su (?P<max>[0-9]+) sopravvissuti"), group=P.map)
 async def map_screen(client, message):
 	match = STATUS_CHECK.search(message.text)
 	mapstate = LOOP.state["map"]
@@ -355,7 +355,7 @@ async def map_screen(client, message):
 		return LOOP.add_task(create_task("Muoviti dove cazzo capita dio porco", client=client,
 										direction=pathfind(pl, (4, 4), board, prio, safe=mapstate["safe"]))(move_mappa), prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Calpesti uno strano pulsante che emana un'onda di energia"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Calpesti uno strano pulsante che emana un'onda di energia"), group=P.map)
 async def impulse_shows_map(client, message):
 	b = LOOP.state["map"]["board"]
 	pl = LOOP.state["map"]["player"]
@@ -372,7 +372,7 @@ CASH_CHECK = re.compile(r"(?P<n>[0-9\.]+) §")
 			r"Hai trovato uno Strano Congegno con al suo interno un 🔩 Rottame|" +
 			r"Trovi e raccogli una 🔋 Bevanda Boost|" +
 			r"Cadi in un ⚡️ Campo Paralizzante e vieni immobilizzato"
-), group=45)
+), group=P.map)
 async def nothing_to_do_here(client, message):
 	if ROTTAME_CHECK.search(message.text):
 		if LOOP.state["map"]["rottami"] == {}:
@@ -391,12 +391,12 @@ async def nothing_to_do_here(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("Niente da fare qui", client=client)(torna_mappa), prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex("Decidi di scappare dallo scontro!"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex("Decidi di scappare dallo scontro!"), group=P.map)
 async def flee_from_combat(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("Scappato dallo scontro", client=client)(torna_mappa), prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(".*(?:Vieni|Venendo) sconfitto definitivamente con un colpo mortale!"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(".*(?:Vieni|Venendo) sconfitto definitivamente con un colpo mortale!"), group=P.map)
 async def got_killed(client, message):
 	LOOP.state["map"]["dead"] = True
 	board = LOOP.state["map"]["board"]
@@ -414,7 +414,7 @@ async def got_killed(client, message):
 			r"L'avversario si mette in posizione difensiva|" +
 			r"L'avversario inizia a caricare l'attacco!|" +
 			r"Battaglia in corso!"
-), group=45)
+), group=P.map)
 async def go_to_fight(client, message):
 	b = LOOP.state["map"]["board"]
 	pl = LOOP.state["map"]["player"]
@@ -436,7 +436,7 @@ ROTTAME_BOTTONE_CHECK = re.compile(r"🔩 Rottame \((?P<n>[0-9]+)\)")
 			r"(?P<shield>.*)\n" +
 			r"(?:🔗 Flaridion: (?P<flari>.*)|)\n" +
 			r"\nLa tua salute: (?P<myhp>[0-9\.]+) hp"
-), group=45)
+), group=P.map)
 async def fight_screen(client, message):
 	m = message.matches[0]
 	mapstate = LOOP.state["map"]
@@ -479,7 +479,7 @@ MULTI_ROTTAME_CHECK = re.compile(r"e (?P<n>[0-9]+) 🔩!")
 			r"L'avversario scappa dallo scontro!.*definitivamente con un colpo mortale!|" +
 			r"L'avversario ha perso troppi turni!\nHai vinto lo scontro!",
 	flags=re.DOTALL
-), group=45)
+), group=P.map)
 async def killed_someone(client, message):
 	LOOP.state["map"]["just-killed"] = True
 	if ROTTAME_CHECK.search(message.text):
@@ -495,7 +495,7 @@ async def killed_someone(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("Ucciso Nemico", client=client)(torna_mappa), prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"L'avversario scappa dallo scontro!"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"L'avversario scappa dallo scontro!"), group=P.map)
 async def enemy_fled(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("L'avversario e` fuggito", client=client)(torna_mappa), prio=True)
@@ -507,7 +507,7 @@ async def enemy_fled(client, message):
 			r"(?P<shield>.*)\n" +
 			r"💰 (?P<cash>[0-9\.]+)\n" +
 			r"🔩 (?P<rottami>[0-9]+)"
-), group=45)
+), group=P.map)
 async def show_sacca(client, message):
 	match = message.matches[0]
 	LOOP.state["map"]["rottami"] = int(match["rottami"])
@@ -523,7 +523,7 @@ LOCATIONS
 			r"Raggiungi un 🔁 Centro Scambi, qui puoi scambiare oggetti che ti potranno essere utili.|" +
 			r"Raggiungi una 💊 Farmacia, qui puoi recuperare la salute ad un costo onesto.|" +
 			r"Raggiungi un 💨 luogo che emana una luce accecante, entri per scoprire i suoi segreti."
-), group=45)
+), group=P.map)
 async def got_to_emporio(client, message):
 	b = LOOP.state["map"]["board"]
 	pl = LOOP.state["map"]["player"]
@@ -545,7 +545,7 @@ async def got_to_emporio(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Puoi acquistare (?P<name>.*) \((?P<stats>.*)\) per (?P<price>[0-9\.]+) §, " +
 			r"al momento possiedi (?P<curr>[0-9\.]+) §, procedi\?"
-), group=45)
+), group=P.map)
 async def buy_from_emporio(client, message):
 	mapstate = LOOP.state["map"]
 	match = message.matches[0]
@@ -573,7 +573,7 @@ async def buy_from_emporio(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Puoi scambiare (?P<price>[0-9]+) 🔩 Rottami per (?P<name>.*) " +
 			r"\((?P<stats>.*)\), al momento ne possiedi (?P<curr>[0-9]+), procedi\?"
-), group=45)
+), group=P.map)
 async def buy_from_centro_scambi(client, message):
 	mapstate = LOOP.state["map"]
 	match = message.matches[0]
@@ -601,7 +601,7 @@ async def buy_from_centro_scambi(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Puoi recuperare (?:il (?P<amount>[0-9]+)% di|tutta la) salute " +
 			r"al costo di (?P<price>[0-9\.]+) §, al momento possiedi (?P<curr>[0-9\.]+) §, procedi\?"
-), group=45)
+), group=P.map)
 async def buy_from_farmacia(client, message):
 	mapstate = LOOP.state["map"]
 	match = message.matches[0]
@@ -625,7 +625,7 @@ async def buy_from_farmacia(client, message):
 				await torna_mappa(ctx)
 			LOOP.add_task(dont_heal, prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"(?:Non necessiti di cure|Non hai monete per le cure), procedi?"), group=45)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"(?:Non necessiti di cure|Non hai monete per le cure), procedi?"), group=P.map)
 async def no_heal_needed(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		@create_task("Non necessito di cure", client=client)
@@ -638,7 +638,7 @@ async def no_heal_needed(client, message):
 # Teletrasporto
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"In questo luogo puoi scegliere se utilizzare il teletrasporto, rischiando di ritrovarti in un luogo pericoloso"
-), group=45)
+), group=P.map)
 async def maybe_use_teleport(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		if CONFIG()["mappe"]["teleport"]:

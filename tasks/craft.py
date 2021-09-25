@@ -10,7 +10,7 @@ from util.command import filterCommand
 from util.permission import is_superuser
 from util.message import edit_or_reply
 
-from plugins.lootbot.common import LOOTBOT, CRAFTLOOTBOT, random_wait, CONFIG
+from plugins.lootbot.common import LOOTBOT, CRAFTLOOTBOT, random_wait, CONFIG, Priorities as P
 from plugins.lootbot.tasks import mnu
 from plugins.lootbot.loop import LOOP, create_task
 
@@ -115,13 +115,13 @@ async def auto_craft(client, message):
 	if no_msg:
 		CRAFT_MSG = None
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La tua rinascita non è sufficente per creare questo oggetto"), group=250)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La tua rinascita non è sufficente per creare questo oggetto"), group=P.craft)
 async def rinascita_insufficiente(client, message):
 	LOOP.state["craft"]["ongoing"] = False
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Creazione (?P<amount>[0-9]+)x (?P<recipe>.*)\nSpenderai (?P<cost>[0-9\.]+) §"
-), group=250)
+), group=P.craft)
 async def craft_confirmation(client, message):
 	global CRAFT_MSG
 	if LOOP.state["craft"]["ongoing"]:
@@ -156,9 +156,9 @@ async def craft_confirmation(client, message):
 							f"<code> → </code> <b>{curr}</b> [<code>{i}/{tot}</code>]\n<code>→ </code> Done (<code>{tot}</code> crafted)",
 							parse_mode="html")
 					CRAFT_MSG = None
-				
-FULL_BACKPACK_CHECK = re.compile(r".*, ecco il contenuto del tuo zaino:")
-@alemiBot.on_message(filters.chat(LOOTBOT), group=96) # trigger always, don't overrule shit
+
+FULL_BACKPACK_CHECK = re.compile(r"([^ ]+), ecco il contenuto del tuo zaino:")
+@alemiBot.on_message(filters.chat(LOOTBOT), group=2**16) # trigger always, don't overrule shit
 async def callback_triggers(client, message):
 	if not LOOP.state["craft"]["last-fwd"]:
 		LOOP.state["craft"]["last-fwd"] = 0
@@ -171,13 +171,8 @@ async def callback_triggers(client, message):
 			LOOP.state["craft"]["last-fwd"] = time.time()
 			await message.forward(CRAFTLOOTBOT)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r".*apri il tuo zaino ed al suo interno trovi:"), group=51)
-async def backpack_check(client, message):
-	LOOP.state["gemme"] = int(re.search("Gemme: (?P<n>[0-9\.]+) 💎", message.text)["n"].replace(".", ""))
-	LOOP.state["cash"] = int(re.search("Monete: (?P<n>[0-9\.]+) §", message.text)["n"].replace(".", ""))
-
 BUTTON_CHECK = re.compile(r"Scegli come ottenere la lista craft:")
-@alemiBot.on_message(filters.chat(CRAFTLOOTBOT), group=51)
+@alemiBot.on_message(filters.chat(CRAFTLOOTBOT), group=P.craft)
 async def craftlootbot_triggers(client, message):
 	if LOOP.state["craft"]["ongoing"]:
 		if message.text and BUTTON_CHECK.search(message.text):

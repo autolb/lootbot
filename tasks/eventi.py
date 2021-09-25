@@ -5,7 +5,7 @@ from pyrogram import filters
 
 from bot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, CONFIG, random_wait
+from plugins.lootbot.common import LOOTBOT, CONFIG, random_wait, Priorities as P
 from plugins.lootbot.tasks import mnu, si
 from plugins.lootbot.loop import LOOP, create_task
 
@@ -32,7 +32,7 @@ ESTRAZIONE_CHECK = re.compile(r"⛏ Estrazione di Mana (?:Rosso|Giallo|Blu) in c
 GENERAZIONE_CHECK = re.compile(r"⏲ Generatore acceso \((?P<curr>[0-9]+)\/(?P<max>[0-9]+) unità\)")
 ATTESA_ISPEZIONE = re.compile(r"🔦 Gnomo in (?:esplorazione|ispezione) fino alle (?P<time>[0-9:]+)")
 @alemiBot.on_message(filters.chat(LOOTBOT) &
-	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=60)
+	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=P.event)
 async def main_menu_starters(client, message):
 	kb = [ btn for sub in message.reply_markup.keyboard for btn in sub ]
 	if len(LOOP) < 1 and CONFIG()["eventi"]["miniera"]["auto"] and "⛏ Miniere di Mana (Evento) ⛰ " in kb:
@@ -59,14 +59,14 @@ async def main_menu_starters(client, message):
 		LOOP.add_task(create_task("Avvia caccia al Ricercato", client=client)(ricercato))
 	if len(LOOP) < 1 and "🏹Itinerario Propizio (Evento) 🎯" in kb \
 	and CONFIG()["eventi"]["itinerario"]["auto"] and not CURRENT_MISSION_CHECK.search(message.text) \
-											   and not CURRENT_ITINERARIO_CHECK.search(message.text):
+												and not CURRENT_ITINERARIO_CHECK.search(message.text):
 		LOOP.add_task(create_task("Not doing any itinerario?", client=client)(itinerario))
 
 """
 Ricercato
 """
 RICERCATO_NAME = re.compile(r"👺 (?:Il|La) ricercat. è (?P<name>[^ ]+) con abilità ")
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il tuo status da ricercato:"), group=60)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il tuo status da ricercato:"), group=P.event)
 async def start_wanted_hunt(client, message):
 	if CONFIG()["eventi"]["ricercato"]["auto"] and not LOOP.state["ispezione"]["ongoing"]:
 		@create_task("Avvia caccia al ricercato", client=client, player=RICERCATO_NAME.search(message.text)["name"])
@@ -93,7 +93,7 @@ async def manhunt_finished(client, message):
 """
 Itinerario
 """
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"^Itinerario Propizio"), group=60)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"^Itinerario Propizio"), group=P.event)
 async def choose_itinerario_region(client, message):
 	if CONFIG()["eventi"]["itinerario"]["auto"]:
 		@create_task("Scegli Regione itinerario", client=client)
@@ -101,7 +101,7 @@ async def choose_itinerario_region(client, message):
 			await ctx.client.send_message(LOOTBOT, "Regione Anomala (S)")
 		LOOP.add_task(choose_region, prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Seleziona la zona in cui iniziare un itinerario"), group=60)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Seleziona la zona in cui iniziare un itinerario"), group=P.event)
 async def choose_itinerario_zone(client, message):
 	if CONFIG()["eventi"]["itinerario"]["auto"]:
 		kb = [ btn for sub in message.reply_markup.keyboard for btn in sub ]
@@ -113,7 +113,7 @@ async def choose_itinerario_zone(client, message):
 				LOOP.add_task(choose_zone, prio=True)
 				break
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Iniziare l'itinerario nel Carro Abbandonato?"), group=60)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Iniziare l'itinerario nel(?:la|) (?P<dove>.+)?"), group=P.event)
 async def avvia_itinerario(client, message):
 	if CONFIG()["eventi"]["itinerario"]["auto"]:
 		@create_task("Avvia itinerario", client=client)
@@ -127,7 +127,7 @@ async def avvia_itinerario(client, message):
 MINIERA
 """
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Le miniere sono state chiuse, hai ricevuto"), group=60)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Le miniere sono state chiuse, hai ricevuto"), group=P.event)
 async def miniere_chiuse(client, message):
 	if CONFIG()["log"]["pin"]["reward"]:
 		await message.pin()
@@ -135,7 +135,7 @@ async def miniere_chiuse(client, message):
 MANA_TIPI = { "blu" : "Miniera Trek", "giallo" : "Miniera Valke", "rosso" : "Miniera Inche" }
 MANA_CHECK = re.compile(r"Miniera (?:Trek|Valke|Inche) \((?:🌊 Blu|⚡️ Giallo|🔥 Rosso) (?P<n>[0-9]+)\/ora")
 OWNED_MANA = re.compile(r"Al momento possiedi:\n🌊 Blu: (?P<blu>[0-9\.]+)\n⚡️ Giallo: (?P<giallo>[0-9\.]+)\n🔥 Rosso: (?P<rosso>[0-9\.]+)\nAvrai possibilità di estrarre")
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Seleziona la miniera dalla quale iniziare a estrarre mana"), group=60)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Seleziona la miniera dalla quale iniziare a estrarre mana"), group=P.event)
 async def choose_mine(client, message): # TODO make this slimmer
 	if not CONFIG()["eventi"]["miniera"]["auto"]:
 		return
@@ -167,7 +167,7 @@ async def choose_mine(client, message): # TODO make this slimmer
 		await si(ctx)
 	LOOP.add_task(choose_mine, prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Estrazione iniziata, torna qui tra qualche ora"), group=60)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Estrazione iniziata, torna qui tra qualche ora"), group=P.event)
 async def started_mine_correctly(client, message):
 	if CONFIG()["eventi"]["miniera"]["auto"]:
 		LOOP.add_task(create_task("Avviata miniera, torna al menu", client=client)(mnu), prio=True)
@@ -175,12 +175,12 @@ async def started_mine_correctly(client, message):
 """
 GENERATORE
 """
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il generatore è pieno! Svuotalo per produrre"), group=60)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il generatore è pieno! Svuotalo per produrre"), group=P.event)
 async def generatore_pieno(client, message):
 	if CONFIG()["eventi"]["generatore"]["auto"]:
 		LOOP.add_task(create_task("Generatore pieno!", client=client)(dust_gen))
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Gestione Generatore"), group=60)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Gestione Generatore"), group=P.event)
 async def aziona_generatore(client, message):
 	if CONFIG()["eventi"]["generatore"]["auto"]:
 		@create_task("Aziona Generatore", client=client)
@@ -194,7 +194,7 @@ TIME_CHECK = re.compile(r"Ultima attività: (?P<date>[0-9\/]+ alle [0-9\:]+)")
 DELTA = timedelta(minutes=30)
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Hai generato fin ora (?P<curr>[0-9]+)\/(?P<max>[0-9]+) unità di polvere, vuoi spegnere"
-), group=60)
+), group=P.event)
 async def get_dust(client, message): # TODO add time based logic!
 	if CONFIG()["eventi"]["generatore"]["auto"]:
 		amount = int(message.matches[0]["curr"])
@@ -215,7 +215,7 @@ async def get_dust(client, message): # TODO add time based logic!
 		else:
 			LOOP.add_task(create_task("Aspetta per generatore", client=client)(mnu), prio=True)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai ottenuto (?P<n>[0-9]+)x Polvere!"), group=60)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai ottenuto (?P<n>[0-9]+)x Polvere!"), group=P.event)
 async def ritirata_polvere(client, message):
 	if CONFIG()["eventi"]["generatore"]["auto"]:
 		LOOP.add_task(create_task("Svuotato generatore, torna al menu", client=client)(mnu), prio=True)

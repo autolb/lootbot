@@ -9,7 +9,7 @@ from util.command import filterCommand
 from util.permission import is_superuser
 from util.message import edit_or_reply
 
-from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG
+from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG, Priorities as P
 from plugins.lootbot.tasks import si, mnu, emporio
 from plugins.lootbot.loop import LOOP, create_task
 
@@ -35,7 +35,7 @@ async def auto_buy_chests(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
 	r"Seleziona la quantità di scrigni da acquistare, ogni scrigno costa (?P<price>[0-9\.]+) §\n" +
 								r"Puoi ancora acquistarne (?P<number>[0-9\.]+) questa settimana"
-), group=52)
+), group=P.norm)
 async def callback_triggers(client, message):
 	if LOOP.state["auto-chest"]:
 		match = message.matches[0]

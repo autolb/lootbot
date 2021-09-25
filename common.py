@@ -16,6 +16,23 @@ CRAFTLOOTBOT = "craftlootbot"
 LOOTPLUSBOT = "lootplusbot"
 MAPMATCHERBOT = "MapMatcher_bot"
 
+# Priorities
+class Priorities:
+	map  : int = 47
+	daily: int = 48
+	event: int = 49
+	norm : int = 50
+	stats: int = 51
+	cave : int = 52
+	miss : int = 53
+	insp : int = 54
+	contr: int = 55
+	dung : int = 56
+	rand : int = 57
+	craft: int = 58
+	snow : int = 59
+	last : int = 60 # Only for "clock" handler
+
 # Config
 DEFAULTS = {
 	"gem-limit" : 50,		# If you have less gems than this, stops using them

@@ -4,7 +4,7 @@ from pyrogram import filters
 
 from bot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG
+from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG, Priorities as P
 from plugins.lootbot.tasks import mnu, si
 from plugins.lootbot.loop import LOOP, create_task
 
@@ -24,7 +24,7 @@ IMPRESE = {
 
 DAILY_CHECK = re.compile(r"(?:Imprese:|(?P<name>.*) \((?P<curr>[0-9]+)\/(?P<top>[0-9]+)\)) (?P<state>🏁|[✅❌ ]+)")
 @alemiBot.on_message(filters.chat(LOOTBOT) &
-	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=30) # Do this before dungeons or inspections!
+	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=P.daily) # Do this before dungeons or inspections!
 async def main_menu_triggers(client, message):
 	if len(LOOP) < 1 and CONFIG()["imprese"]["auto"] and LOOP.state["imprese"]["new"]:
 		LOOP.state["imprese"]["new"] = False
@@ -37,7 +37,7 @@ async def main_menu_triggers(client, message):
 				await mnu(ctx)
 			LOOP.add_task(check_dailies)
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai completato l'impresa giornaliera (?P<name>.*) e hai"), group=58)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai completato l'impresa giornaliera (?P<name>.*) e hai"), group=P.daily)
 async def on_daily_completed(client, message):
 	name = message.matches[0]["name"]
 	if name in LOOP.state["imprese"]["todo"]:
@@ -55,7 +55,7 @@ async def on_daily_completed(client, message):
 		LOOP.add_task(dress_up)
 
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Imprese giornaliere\nOggi non sono disponibili imprese giornaliere :\("), group=58)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Imprese giornaliere\nOggi non sono disponibili imprese giornaliere :\("), group=P.daily)
 async def no_dailies_on_weekend(client, message):
 	LOOP.state["imprese"]["todo"] = []
 
@@ -65,7 +65,7 @@ async def no_dailies_on_weekend(client, message):
 			r"> (?P<done2>✅ |)(?P<title2>.*): (?P<n2>[0-9\.]+)(?:\/|)(?P<max2>[0-9\.]+|) (?P<desc2>.*) \((?P<reward2>[0-9\.]+ §)\)\n" +
 			r"> (?P<done3>✅ |)(?P<title3>.*): (?P<n3>[0-9\.]+)(?:\/|)(?P<max3>[0-9\.]+|) (?P<desc3>.*) \((?P<reward3>[0-9\.]+ §)\)\n" +
 			r"\nImprese complessive"
-), group=58)
+), group=P.daily)
 async def salva_imprese_di_oggi(client, message):
 	match = message.matches[0].groupdict()
 	LOOP.state["imprese"]["giornaliere"] = [
@@ -160,7 +160,7 @@ async def salva_imprese_di_oggi(client, message):
 			LOOP.add_task(open_talenti)
 
 PRICE_CHECK = re.compile(r"Pacchetto (?:Epici|Leggendari|Ultra Rari|Rari|Non Comuni|Comuni) \((?P<price>[0-9\.]+) §\)")
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il Mercante Pazzo oggi offre"), group=58)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il Mercante Pazzo oggi offre"), group=P.daily)
 async def buy_cheapest_pack_from_mercante_pazzo(client, message):
 	kb = [ btn for sub in message.reply_markup.keyboard for btn in sub ]
 	min_price = 1000000000 # You can't hold more money than this anyway
@@ -181,14 +181,14 @@ async def buy_cheapest_pack_from_mercante_pazzo(client, message):
 			await random_wait()
 			await mnu(ctx)
 		LOOP.add_task(buy_cheapest_pacchetto, prio=True)
-			
+
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"> Arma \((?P<arma>.*)\)\n" +
 			r"> Armatura \((?P<armatura>.*)\)\n" +
 			r"> Scudo \((?P<scudo>.*)\)\n" +
 			r"(?:> Talismano \((?P<talismano>.*)\)\n|)\n" +
 			r"Rimossi e reinseriti nello zaino"
-), group=58)
+), group=P.daily)
 async def got_naked_message(client, message):
 	"""This is kind of an ad-hoc hook for "Arte della Guerra" """
 	if "Arte della guerra" in LOOP.state["imprese"]["todo"]:

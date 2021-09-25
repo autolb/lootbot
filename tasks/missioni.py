@@ -5,7 +5,7 @@ from pyrogram import filters
 
 from bot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG, Rarity
+from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG, Rarity, Priorities as P
 from plugins.lootbot.tasks import si, mnu
 from plugins.lootbot.loop import LOOP, create_task
 
@@ -29,14 +29,14 @@ CURRENT_INCARICO_CHECK = re.compile(r"Incarico in corso fino")
 CURRENT_CAVA_CHECK = re.compile(r"(?:🗻 Esplorazione cava|🧗 Viaggio) fino")
 CURRENT_ITINERARIO_CHECK = re.compile(r"🗾 Itinerario fino")
 @alemiBot.on_message(filters.chat(LOOTBOT) & automission &
-	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=52)
+	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=P.miss)
 async def main_menu_triggers(client, message):
 	if len(LOOP) < 1 and not CURRENT_MISSION_CHECK.search(message.text) \
 			and not CURRENT_ITINERARIO_CHECK.search(message.text) and not CURRENT_CAVA_CHECK.search(message.text) \
 																  and not CURRENT_INCARICO_CHECK.search(message.text):
 		LOOP.add_task(create_task("Got spare time for a mission?", client=client)(missione))
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Missione completata! Hai ottenuto:"), group=52)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Missione completata! Hai ottenuto:"), group=P.miss)
 async def missione_finita(client, message):
 	await asyncio.sleep(1) # The "daily done" message comes after the "mission done" message. Wait for it to process
 	rarity = re.search("rarità (?P<rarity>C|NC|R|UR|L|E)", message.text)["rarity"]
@@ -55,7 +55,7 @@ async def missione_finita(client, message):
 		LOOP.add_task(equip_talismano_oculato)
 		LOOP.state["mission"]["talisman"] = False
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & automission & filters.regex(pattern=r"Prima di poter partire in un'avventurosa missione"), group=52)
+@alemiBot.on_message(filters.chat(LOOTBOT) & automission & filters.regex(pattern=r"Prima di poter partire in un'avventurosa missione"), group=P.miss)
 async def cant_restart_mission(client, message):
 	LOOP.add_task(create_task("Non posso fare missioni ora", client=client)(mnu), prio=True)
 
@@ -67,7 +67,7 @@ async def cant_restart_mission(client, message):
 			r"Finalmente le tue gesta sono state riconosciute! Ti è stata assegnata una missione direttamente dalla Fenice|" +
 			r"Avventurieri come te vivono per giorni come questo!\nUn Epica avventura ti aspetta, finalmente...) \((?P<rarity>C|NC|R|UR|L|E)\)",
 	flags=re.DOTALL
-), group=52)
+), group=P.miss)
 async def avvia_e_skippa_missione(client, message):
 	if CONFIG()["talismani"] and not LOOP.state["mission"]["talisman"]:
 		@create_task("Equipaggia Talismano Esploratore", client=client)
@@ -97,7 +97,7 @@ async def avvia_e_skippa_missione(client, message):
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & automission & filters.regex(
 	pattern=r"Sicuro di voler terminare subito la missione\? Consumerai (?:.+) 💎. Ne possiedi (?P<n>[0-9\.]+)"
-), group=52)
+), group=P.miss)
 async def skip_and_menu(client, message):
 	@create_task("Conferma missione gemmata", client=client)
 	async def confirm_that(ctx):
@@ -107,6 +107,6 @@ async def skip_and_menu(client, message):
 	LOOP.add_task(confirm_that, prio=True)
 	LOOP.state["gemme"] = int(message.matches[0]["n"]) -1
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & automission & filters.regex(pattern=r"Manca meno di 5 minuti al termine della missione"), group=50)
+@alemiBot.on_message(filters.chat(LOOTBOT) & automission & filters.regex(pattern=r"Manca meno di 5 minuti al termine della missione"), group=P.miss)
 async def cant_skip_mission(client, message):
 	LOOP.add_task(create_task("Mancano meno di 5 min", client=client)(mnu))

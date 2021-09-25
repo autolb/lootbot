@@ -10,7 +10,7 @@ from util.command import filterCommand
 from util.permission import is_superuser
 from util.message import edit_or_reply
 
-from plugins.lootbot.common import LOOTBOT, CRAFTLOOTBOT, random_wait, CONFIG
+from plugins.lootbot.common import LOOTBOT, CRAFTLOOTBOT, random_wait, CONFIG, Priorities as P
 from plugins.lootbot.tasks import mnu, si
 from plugins.lootbot.loop import LOOP, create_task
 
@@ -25,13 +25,13 @@ async def contrabbandiere(ctx):
 OFFERTA_CONTRABBANDIERE = re.compile(r"🔩 Offerta Contrabbandiere disponibile")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"
-), group=57)
+), group=P.contr)
 async def vai_al_contrabbandiere(client, message):
 	if CONFIG()["contrabbandiere"] and not LOOP.state["smuggler"]["cant-craft"] \
 	and OFFERTA_CONTRABBANDIERE.search(message.text) and len(LOOP) == 0:
 		LOOP.add_task(create_task("Offerta contrabbandiere disponibile", client=client)(contrabbandiere))
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il Contrabbandiere ha una nuova offerta per te!"), group=57)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il Contrabbandiere ha una nuova offerta per te!"), group=P.contr)
 async def nuovo_contrabbandiere(client, message):
 	if CONFIG()["contrabbandiere"]:
 		LOOP.add_task(create_task("Nuova offerta Contrabbandiere", client=client)(contrabbandiere))
@@ -41,7 +41,7 @@ async def nuovo_contrabbandiere(client, message):
 ITEM_SEARCH = re.compile(r"quando torna ti propone affari diversi\.\n\n(?P<item>.*) \((?P<rarity>.+)\) al prezzo di (?P<price>[0-9\.]+) §(?: |)(?P<status>✅|☑️|)")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
 	pattern=r"Benvenut. (?:.*)!\nPuoi creare oggetti per il Contrabbandiere"
-), group=57)
+), group=P.contr)
 async def schermata_contrabbandiere(client, message):
 	if CONFIG()["contrabbandiere"]:
 		match = ITEM_SEARCH.search(message.text)

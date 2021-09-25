@@ -5,7 +5,7 @@ from pyrogram.types import InlineKeyboardMarkup
 
 from bot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, LOOTPLUSBOT, random_wait, CONFIG
+from plugins.lootbot.common import LOOTBOT, LOOTPLUSBOT, random_wait, CONFIG, Priorities as P
 from plugins.lootbot.loop import LOOP, create_task
 
 CHOICES = ["In groppa al drago", "Uno sopra l'altro", "La ricerca di tanto cibo", "Un gruppo di Cerbrutti",
@@ -30,7 +30,7 @@ CHOICES = ["In groppa al drago", "Uno sopra l'altro", "La ricerca di tanto cibo"
 		   "Vi alzate e compattate in gruppo: Affronterete la cosa insieme.", "\"Aaaaaaaa!\"",
 		   "Senza esitare rispondete in coro: \"Si, l'uomo!\"", "Sala da Pranzo", "La discarica", "Sono nascosti"]
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.inline_keyboard, group=6969) # Do this for any message with inline buttons
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.inline_keyboard, group=P.norm) # Do this for any message with inline buttons
 async def auto_incarichi(client, message):
 	if CONFIG()["incarichi"]["auto"]:
 		kb = message.reply_markup.inline_keyboard
@@ -41,7 +41,7 @@ async def auto_incarichi(client, message):
 					await message.click(x=j, y=i)
 					break
 
-@alemiBot.on_message(filters.chat(LOOTPLUSBOT) & filters.regex(pattern=r"[^ ]+ ti incita a votare per l'incarico!"), group=6969)
+@alemiBot.on_message(filters.chat(LOOTPLUSBOT) & filters.regex(pattern=r"[^ ]+ ti incita a votare per l'incarico!"), group=P.norm)
 async def incitato_a_votare(client, message):
 	if CONFIG()["incarichi"]["auto"]:
 		@create_task("Controlla incarico in corso", client=client)
