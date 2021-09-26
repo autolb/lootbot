@@ -7,7 +7,7 @@ from pyrogram import filters
 from bot import alemiBot
 
 from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG, Priorities as P
-from plugins.lootbot.tasks import si, mnu, rifugio
+from plugins.lootbot.tasks import si, mnu
 from plugins.lootbot.loop import LOOP, create_task
 
 def score(numbers):
@@ -63,10 +63,11 @@ async def main_menu_triggers(client, message):
 	r"La tua combinazione di rune \((?P<me>[0-9]+)\) è (?:migliore|peggiore) di quella del guardiano \((?P<other>[0-9]+)\)!"
 ), group=P.insp)
 async def riavvia_ispezione(client, message):
-	LOOP.state["dungeon"]["interrupt"] = True
 	LOOP.state["ispezione"]["ongoing"] = False
 	if CONFIG()["ispezione"]["auto"] and LOOP.state["cash"] > 2000:
-		LOOP.add_task(create_task("Riavvia Ispezione", client=client)(rifugio))
+		LOOP.state["interrupt"] = True
+		if len(LOOP) < 1:
+			LOOP.add_task(create_task("Fine ispezione, torna al menu", client=client)(mnu))
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Ispezione in corso fino alle|Stai svolgendo un ispezione, completala"), group=P.insp)
 async def cant_start_ispezione(client, message):

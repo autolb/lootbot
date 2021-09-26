@@ -224,7 +224,7 @@ async def why_2_steps_to_open_map_ffs(client, message):
 async def map_ready(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		if not CONFIG()["mappe"]["prio"]:
-			LOOP.state["dungeon"]["interrupt"] = True
+			LOOP.state["interrupt"] = True
 		LOOP.add_task(create_task("Torna alla mappa", client=client)(torna_mappa), prio=CONFIG()["mappe"]["prio"])
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai terminato le mosse a disposizione, attendi il prossimo restringimento"), group=P.map)
@@ -246,7 +246,7 @@ async def map_generated(client, message):
 		async def start_map(ctx):
 			await ctx.client.send_message(LOOTBOT, "Vai in battaglia")
 		if not CONFIG()["mappe"]["prio"]:
-			LOOP.state["dungeon"]["interrupt"] = True
+			LOOP.state["interrupt"] = True
 		LOOP.add_task(start_map, prio=CONFIG()["mappe"]["prio"])
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.me & filters.regex(pattern=r"Torna alla mappa"), group=P.map)
@@ -425,7 +425,7 @@ async def go_to_fight(client, message):
 			await ctx.client.send_message(LOOTBOT, "Attacca!")
 		LOOP.add_task(goto_fight, prio=CONFIG()["mappe"]["prio"])
 		if not CONFIG()["mappe"]["prio"]:
-			LOOP.state["dungeon"]["interrupt"] = True
+			LOOP.state["interrupt"] = True
 
 ROTTAME_BOTTONE_CHECK = re.compile(r"🔩 Rottame \((?P<n>[0-9]+)\)")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(

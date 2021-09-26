@@ -18,8 +18,6 @@ async def itinerario(ctx):
 	await ctx.client.send_message(LOOTBOT, "🏹Itinerario Propizio (Evento) 🎯")
 
 # Requires client
-async def ricercato(ctx):
-	await ctx.client.send_message(LOOTBOT, "💰Il Ricercato (Evento) 👺")
 
 """
 Main Menu
@@ -122,6 +120,13 @@ async def avvia_itinerario(client, message):
 			await random_wait()
 			await mnu(ctx)
 		LOOP.add_task(start_itinerario, prio=True)
+
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Itinerario completato! Hai ottenuto"), group=P.event)
+async def terminato_itinerario(client, message):
+	if CONFIG()["eventi"]["itinerario"]["auto"]:
+		LOOP.state["interrupt"] = True
+		if len(LOOP) < 1:
+			LOOP.add_task(create_task("Itinerario completato, torna al menu", client=client)(mnu))
 
 """
 MINIERA

@@ -36,9 +36,10 @@ async def main_menu_triggers(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai completato l'esplorazione della cava"), group=P.cave)
 async def riavvia_cava(client, message):
 	await asyncio.sleep(1) # The "daily done" msg comes after, so let's give lootbot 1 sec to send it
-	LOOP.state["dungeon"]["interrupt"] = True
 	if (CONFIG()["cava"]["auto"] or autocava_check()):
-		LOOP.add_task(create_task("Riavvia cava", client=client)(esplorazioni))
+		LOOP.state["interrupt"] = True
+		if len(LOOP) < 1:
+			LOOP.add_task(create_task("Cava terminata, torna al menu", client=client)(mnu))
 	elif CONFIG()["talismani"]:
 		@create_task("Equipaggia Talismano Oculato", client=client)
 		async def equip_talismano_oculato(ctx):

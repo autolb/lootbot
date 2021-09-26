@@ -42,8 +42,9 @@ async def missione_finita(client, message):
 	rarity = re.search("rarità (?P<rarity>C|NC|R|UR|L|E)", message.text)["rarity"]
 	LOOP.state["mission"]["rarity"] = rarity
 	if automission_check():
-		LOOP.state["dungeon"]["interrupt"] = True
-		LOOP.add_task(create_task("Riavvia missione", client=client)(missione))
+		LOOP.state["interrupt"] = True
+		if len(LOOP) < 1:
+			LOOP.add_task(create_task("Missione terminata, torna al menu", client=client)(mnu))
 	elif CONFIG()["talismani"] and LOOP.state["mission"]["talisman"]:
 		@create_task("Equipaggia Talismano Oculato", client=client)
 		async def equip_talismano_oculato(ctx):

@@ -74,7 +74,6 @@ DUNGEON_COOLDOWN_CHECK = re.compile(r"Attesa dungeon fino alle")
 	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=P.dung) # Resume doing dungeons after anything else: dungeons take a while!
 async def main_menu_triggers(client, message): # TODO maybe move main menu tasks in their respective task files?
 	LOOP.state["dungeon"]["running"] = False
-	LOOP.state["dungeon"]["interrupt"] = False
 	match = CARICHE_CHECK.search(message.text)
 	if match:
 		LOOP.state["dungeon"]["cariche"] = int(match["curr"])
@@ -336,8 +335,7 @@ async def attaccalo(client, message): # Vai al combattimento
 	if "lvl" in args and args["lvl"]:
 		LOOP.state["fight"]["lvl"] = int(args["lvl"])
 	if CONFIG()["dungeon"]["auto"]:
-		if LOOP.state["dungeon"]["interrupt"]:
-			LOOP.state["dungeon"]["interrupt"] = False
+		if LOOP.state["interrupt"]:
 			LOOP.add_task(create_task("Sospendi il combattimento (dungeon)", client=client)(mnu), prio=True)
 		else:
 			@create_task(f"Attacca {LOOP.state['fight']['name']} ({LOOP.state['fight']['lvl']})", client=client)

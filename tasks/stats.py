@@ -46,6 +46,7 @@ STATS_MENU_CHECK = re.compile(r"(?P<rinascita>✨|🔆|💫|⭐️|🌟|🎖) (?
 @alemiBot.on_message(filters.chat(LOOTBOT) &
 	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=P.stats)
 async def main_menu_triggers(client, message):
+	LOOP.state["interrupt"] = False
 	match = STATS_MENU_CHECK.search(message.text)
 	if match:
 		LOOP.state["me"]["lvl"] = int(match["lvl"])
