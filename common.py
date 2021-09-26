@@ -78,6 +78,7 @@ DEFAULTS = {
 		"mapmatcher" : False,	# Send dungeon mapping to @MatMatcher_bot automatically
 		"spell" : {				# Cast Spells
 			"auto" : False,			# Do automatically in a fight
+			"hp" : 1.0,				# Cast only when life is below (or equal to) this percentage
 			"rateo" : [20, 15, 15], # Mana ratio to use to recraft spells
 		},
 		"incisioni" : True,		# Try unsure incisions

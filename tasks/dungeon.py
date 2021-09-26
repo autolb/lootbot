@@ -376,6 +376,7 @@ async def dentro_al_fight(client, message): # Schermata principale
 	LOOP.state["fight"] = fight
 
 	hp_thr = CONFIG()["dungeon"]["hp"] * LOOP.state["me"]["maxhp"]
+	hp_spell_thr = CONFIG()["dungeon"]["spell"]["hp"] * LOOP.state["me"]["maxhp"]
 	if CONFIG()["imprese"]["auto"] and CONFIG()["imprese"]["activity"] \
 	and "Ancora qui sei?!" in LOOP.state["imprese"]["todo"]:
 		hp_thr = 0.2 * LOOP.state["me"]["maxhp"]
@@ -391,8 +392,10 @@ async def dentro_al_fight(client, message): # Schermata principale
 					await ctx.client.send_message(LOOTBOT, "Torna al dungeon")
 				LOOP.add_task(heal, prio=True)
 		else:
-			if not LOOP.state["dungeon"]["casting"] and not LOOP.state["cast"]["stop"] \
-			and (CONFIG()["dungeon"]["spell"]["auto"] or cast_for_impresa()):
+			if not LOOP.state["dungeon"]["casting"] and not LOOP.state["cast"]["stop"] and (
+					(CONFIG()["dungeon"]["spell"]["auto"] and LOOP.state["me"]["hp"] <= hp_spell_thr)
+					or cast_for_impresa()
+			):
 				@create_task("Lancia Incantesimo", client=client)
 				async def cast(ctx):
 					await ctx.client.send_message(LOOTBOT, "Incantesimi ✨")
@@ -402,6 +405,8 @@ async def dentro_al_fight(client, message): # Schermata principale
 				action = "Attacca {fight['name']}"
 				if message.reply_markup:
 					action = message.reply_markup.keyboard[0][0]
+				else:
+					action = f"Attacca {LOOP.state['fight']['name']}"
 				@create_task(f"Attacca {fight['name']}", client=client, attack=action)
 				async def attack(ctx):
 					await ctx.client.send_message(LOOTBOT, ctx.attack)
