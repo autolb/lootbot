@@ -230,3 +230,11 @@ async def get_dust(client, message): # TODO add time based logic!
 async def ritirata_polvere(client, message):
 	if CONFIG()["eventi"]["generatore"]["auto"]:
 		LOOP.add_task(create_task("Svuotato generatore, torna al menu", client=client)(mnu), prio=True)
+
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai ricevuto il tuo Generatore di Polvere!"), group=P.event)
+async def ricevuto_generatore(client, message):
+	if CONFIG()["eventi"]["generatore"]["auto"]:
+		@create_task("Vai al generatore", client=client)
+		async def go_to_generatore(ctx):
+			await ctx.client.send_message(LOOTBOT, "Vai al Generatore di Polvere")
+		LOOP.add_task(go_to_generatore, prio=True)
