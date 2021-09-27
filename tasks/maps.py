@@ -175,6 +175,8 @@ async def show_map_command(client, message):
 async def on_map_finished(client, message):
 	if CONFIG()["log"]["pin"]["map"]:
 		await message.pin()
+	if CONFIG()["mappe"]["auto"] and len(LOOP) < 1:
+		LOOP.add_task(create_task("Mappa terminata", client=client)(mnu))
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.me & filters.regex(pattern=r"Allenamento 🥋|Accedi alla Lobby 🏹"), group=P.map)
 async def starting_map(client, message):
