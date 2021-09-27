@@ -55,7 +55,7 @@ async def main_menu_starters(client, message):
 	if len(LOOP) < 1 and "💰Il Ricercato (Evento) 👺" in kb \
 	and CONFIG()["eventi"]["ricercato"]["auto"] and not ATTESA_ISPEZIONE.search(message.text):
 		LOOP.add_task(create_task("Avvia caccia al Ricercato", client=client)(ricercato))
-	if len(LOOP) < 1 and "🏹Itinerario Propizio (Evento) 🎯" in kb \
+	if len(LOOP) < 1 and "🏹Itinerario Propizio (Evento) 🎯" in kb and not LOOP.state["itinerario"]["non-disponibile"] \
 	and CONFIG()["eventi"]["itinerario"]["auto"] and not CURRENT_MISSION_CHECK.search(message.text) \
 												and not CURRENT_ITINERARIO_CHECK.search(message.text):
 		LOOP.add_task(create_task("Not doing any itinerario?", client=client)(itinerario))
@@ -127,6 +127,12 @@ async def terminato_itinerario(client, message):
 		LOOP.state["interrupt"] = True
 		if len(LOOP) < 1:
 			LOOP.add_task(create_task("Itinerario completato, torna al menu", client=client)(mnu))
+
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Oggi l'evento non è disponibile, torna nel weekend"), group=P.event)
+async def itinerario_non_disponibile_pd_edo(client, message):
+	LOOP.state["itinerario"]["non-disponibile"] = True
+	if CONFIG()["eventi"]["itinerario"]["auto"]:
+		LOOP.add_task(create_task("Itinerario non disponibile", client=client)(mnu), prio=True)
 
 """
 MINIERA

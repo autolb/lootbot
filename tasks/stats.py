@@ -35,6 +35,8 @@ async def sync_state(client, message):
 		LOOP.state["smuggler"]["try-craft-once"] = False
 		LOOP.state["smuggler"]["cant-craft"] = False
 		LOOP.state["imprese"]["new"] = True
+		if LOOP.state["itinerario"]["non-disponibile"]:
+			LOOP.state["itinerario"]["non-disponibile"] = False
 		if CONFIG()["sync"]["friends"]["auto"]:
 			r = requests.get(CONFIG()["sync"]["friends"]["url"])
 			with open("plugins/lootbot/data/friends.json", "w") as f:
