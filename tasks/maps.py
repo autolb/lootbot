@@ -222,7 +222,7 @@ async def why_2_steps_to_open_map_ffs(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		LOOP.add_task(create_task("Torna alla mappa", client=client)(torna_mappa))
 
-@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"La mappa si è ristretta e le Cariche Movimento sono state ripristinate!"), group=P.map)
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"(?:Tutte le Cariche sono state consumate, l|L)a mappa si è ristretta e le Cariche Movimento sono state ripristinate!"), group=P.map)
 async def map_ready(client, message):
 	if CONFIG()["mappe"]["auto"]:
 		if not CONFIG()["mappe"]["prio"]:
