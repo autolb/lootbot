@@ -140,8 +140,8 @@ DEFAULTS = {
 	},
 	"raccogli" : False,		# Get random drops (boccetta cariche, extra mana...)
 	"assalto" : {			# Do Assault
-		"auto" : False,			# Automatically Increment
-		"ruolo" : None			# Does nothing for now
+		"inc": False,		# Automatically Increment
+	#	"build" : False,	# Automatically Build (TODO!)
 	},
 	"eventi" : {			# Try to do recurring events
 		"generatore": {			# Do dust generator
