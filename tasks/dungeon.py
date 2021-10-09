@@ -791,12 +791,15 @@ async def stanza_bottoni_ghiacciati(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		LOOP.state["me"]["hp"] = int(HP_CHECK.search(message.text)["hp"].replace("." , ""))
 		if LOOP.state["me"]["hp"] < (CONFIG()["dungeon"]["hp"] * LOOP.state["me"]["maxhp"]):
-			@create_task("Ripristina Salute", client=client)
-			async def heal(ctx):
-				await ctx.client.send_message(LOOTBOT, "❣️")
-				await random_wait()
-				await ctx.client.send_message(LOOTBOT, "Torna al dungeon")
-			LOOP.add_task(heal)
+			if LOOP.state["dungeon"]["rush"]:
+				LOOP.add_task(create_task("Ferma dungeon (rush) per salute bassa", client=client)(mnu), prio=True)
+			else:
+				@create_task("Ripristina Salute", client=client)
+				async def heal(ctx):
+					await ctx.client.send_message(LOOTBOT, "❣️")
+					await random_wait()
+					await ctx.client.send_message(LOOTBOT, "Torna al dungeon")
+				LOOP.add_task(heal, prio=True)
 		else:
 			choice = 2
 			if CONFIG()["dungeon"]["try-buttons"]:
