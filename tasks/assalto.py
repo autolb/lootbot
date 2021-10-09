@@ -10,15 +10,18 @@ from plugins.lootbot.loop import LOOP, create_task
 
 # Requires client
 async def incrementa(ctx):
-	await ctx.client.send_message(LOOTBOT, "Riprendi battaglia ☄️")
-	await random_wait()
-	await ctx.client.send_message(LOOTBOT, "Incremento 💢")
+	if CONFIG()["assalto"]["fast"]:
+		await ctx.client.send_message(LOOTBOT, "inc")
+	else:
+		await ctx.client.send_message(LOOTBOT, "Riprendi battaglia ☄️")
+		await random_wait()
+		await ctx.client.send_message(LOOTBOT, "Incremento 💢")
 	await random_wait()
 	await mnu(ctx)
 
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
-	r"📜 Report battaglia del turno (?P<turn>[0-9]+) contro (?P<boss>[A-Za-z\s]+) \(Boss\)"
+	r"📜 Report battaglia del turno (?P<turn>[0-9]+) contro (?P<boss>[A-Za-z\s]+) \((?P<type>.+)\)"
 ), group=P.norm)
 async def report_battaglia(client, message):
 	if CONFIG()["assalto"]["inc"]:
