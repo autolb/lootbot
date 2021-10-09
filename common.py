@@ -141,6 +141,7 @@ DEFAULTS = {
 	"raccogli" : False,		# Get random drops (boccetta cariche, extra mana...)
 	"assalto" : {			# Do Assault
 		"inc": False,		# Automatically Increment
+		"fast": False,		# Increment quickly, with just "inc"
 	#	"build" : False,	# Automatically Build (TODO!)
 	},
 	"eventi" : {			# Try to do recurring events
