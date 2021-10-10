@@ -131,7 +131,7 @@ async def torna_mappa(ctx):
 
 # Requires client
 async def apri_mappa(ctx):
-	await ctx.client.send_message(LOOTBOT, "Mappe di Lootia 🗺 (Beta)")
+	await ctx.client.send_message(LOOTBOT, "Mappe di Lootia 🗺")
 
 # Requires client, direction
 async def move_mappa(ctx):

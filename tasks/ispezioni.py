@@ -45,6 +45,8 @@ async def main_menu_triggers(client, message):
 	match = ISPEZIONI_RIMASTE.search(message.text)
 	if match:
 		LOOP.state["ispezioni"]["rimaste"] = int(match["n"])
+	if LOOP.state["me"]["rinascita"] == "✨" and LOOP.state["lvl"] and LOOP.state["lvl"] < 15:
+		return # level too low
 	kb = [ btn for sub in message.reply_markup.keyboard for btn in sub ]
 	if "💰Il Ricercato (Evento) 👺" not in kb and len(LOOP) < 1 and CONFIG()["ispezione"]["auto"]:
 		if GNOMO_CHECK.search(message.text):

@@ -47,13 +47,17 @@ Dungeon start events
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Hai ricaricato tutta la salute"), group=P.dung)
 async def random_heal(client, message): # Cura, aggiorna vita e se in Dungeon Rush, riprendi
 	LOOP.state["me"]["hp"] = LOOP.state["me"]["maxhp"]
-	if LOOP.state["dungeon"]["rush"] and not LOOP.state["dungeon"]["running"]:
+	if LOOP.state["me"]["rinascita"] == "✨" and LOOP.state["lvl"] and LOOP.state["lvl"] < 50:
+		return
+	if CONFIG()["dungeon"]["auto"] and LOOP.state["dungeon"]["rush"] and not LOOP.state["dungeon"]["running"]:
 		LOOP.add_task(create_task("Avvia Dungeon (Rush)", client=client)(dungeon))
 
 # Cooldown
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"I dungeon sono di nuovo disponibili"), group=P.dung)
 async def dungeon_fuori_cooldown(client, message):
 	LOOP.state["dungeon"]["cooldown"] = False
+	if LOOP.state["me"]["rinascita"] == "✨" and LOOP.state["lvl"] and LOOP.state["lvl"] < 50:
+		return
 	if CONFIG()["dungeon"]["start"] and not LOOP.state["dungeon"]["running"] \
 	and (LOOP.state["dungeon"]["cariche"] == {} or LOOP.state["dungeon"]["cariche"] >= CONFIG()["dungeon"]["cariche"]):
 		LOOP.add_task(create_task("Avvia Dungeon", client=client)(dungeon))
@@ -62,6 +66,8 @@ async def dungeon_fuori_cooldown(client, message):
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"L'Energia Esplorativa è carica al massimo"), group=P.dung)
 async def energia_al_massimo(client, message):
 	LOOP.state["dungeon"]["cariche"] = LOOP.state["dungeon"]["maxcariche"]
+	if LOOP.state["me"]["rinascita"] == "✨" and LOOP.state["lvl"] and LOOP.state["lvl"] < 50:
+		return
 	if not LOOP.state["dungeon"]["running"] and not LOOP.state["dungeon"]["cooldown"] and CONFIG()["dungeon"]["auto"]:
 		LOOP.add_task(create_task("Avvia Dungeon", client=client)(dungeon))
 
@@ -107,6 +113,8 @@ async def main_menu_triggers(client, message): # TODO maybe move main menu tasks
 			LOOP.state["dungeon"]["cooldown"] = False
 	elif DUNGEON_RESTART.search(message.text):
 		LOOP.state["dungeon"]["cooldown"] = False
+		if LOOP.state["me"]["rinascita"] == "✨" and LOOP.state["lvl"] and LOOP.state["lvl"] < 50:
+			return
 		if len(LOOP) < 1 and CONFIG()["dungeon"]["start"]:
 			LOOP.add_task(create_task("Check + restart dungeon", client=client)(dungeon))
 
