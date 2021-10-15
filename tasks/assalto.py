@@ -21,7 +21,7 @@ async def incrementa(ctx):
 
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
-	r"📜 Report battaglia del turno (?P<turn>[0-9]+) contro (?P<boss>[A-Za-z\s]+) \((?P<type>.+)\)"
+	r"📜 Report battaglia del turno (?P<turn>[0-9]+) contro (?P<boss>.+) \((?P<type>.+)\)"
 ), group=P.norm)
 async def report_battaglia(client, message):
 	if CONFIG()["assalto"]["inc"]:
