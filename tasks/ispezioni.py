@@ -32,6 +32,10 @@ def score(numbers):
 	else:
 		return max(numbers)
 
+# Requires client
+async def goto_rifugio(ctx):
+	await ctx.client.send_message(LOOTBOT, "Rifugio 🔦")
+
 GNOMO_CHECK = re.compile(r"Gnomo in attesa di istruzioni")
 ATTESA_ISPEZIONE = re.compile(r"🔦 Gnomo in (?:esplorazione|ispezione) fino alle (?P<time>[0-9:]+)")
 ISPEZIONI_RIMASTE = re.compile(r"🔦 (?P<n>[0-9]+) ispezioni possibili oggi")
@@ -55,18 +59,16 @@ async def main_menu_triggers(client, message):
 				await ctx.client.send_message(LOOTBOT, "Contatta lo gnomo")
 			LOOP.add_task(contatta_lo_gnomo)
 		elif LOOP.state["ispezione"]["rimaste"] > 0 and not LOOP.state["ispezione"]["ongoing"]:
-			@create_task("Avvia ispezione", client=client)
-			async def goto_rifugio(ctx):
-				await ctx.client.send_message(LOOTBOT, "Rifugio 🔦")
-			LOOP.add_task(goto_rifugio)
+			LOOP.add_task(create_task("Avvia ispezione", client=client)(goto_rifugio))
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
 	r"Il tuo gnomo (?P<name>Occhiofurbo|Piedelesto|Testacalda) non è riuscito a raggiungere il rifugio nemico, dannazione!|" +
-	r"La tua combinazione di rune \((?P<me>[0-9]+)\) è (?:migliore|peggiore) di quella del guardiano \((?P<other>[0-9]+)\)!"
+	r"La tua combinazione di rune \((?P<me>[0-9]+)\) è (?:migliore|peggiore) di quella del guardiano \((?P<other>[0-9]+)\)!|" +
+	r"L'effetto del Campo di Forza è terminato!"
 ), group=P.insp)
 async def riavvia_ispezione(client, message):
 	LOOP.state["ispezione"]["ongoing"] = False
-	if CONFIG()["ispezione"]["auto"] and LOOP.state["cash"] > 2000:
+	if CONFIG()["ispezione"]["auto"] and (LOOP.state["cash"] > 2000 or CONFIG()["ispezione"]["shield"]):
 		LOOP.state["interrupt"] = True
 		if len(LOOP) < 1:
 			LOOP.add_task(create_task("Fine ispezione, torna al menu", client=client)(mnu))
@@ -80,7 +82,12 @@ async def cant_start_ispezione(client, message):
 ISPEZIONI_LEFT = re.compile(r"Puoi ancora effettuare (?P<number>[0-9]+) ispezioni, subirne")
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern="Bentornat. nel tuo 🏕"), group=P.insp)
 async def avvia_nuova_ispezione(client, message):
-	if CONFIG()["ispezione"]["auto"] and LOOP.state["cash"] > 2000:
+	if CONFIG()["ispezione"]["shield"]:
+		@create_task("Accendi Campo di Forza", client=client)
+		async def activate_forcefield(ctx):
+			await ctx.client.send_message(LOOTBOT, "Protezione 💫")
+		LOOP.add_task(activate_forcefield, prio=True)
+	elif CONFIG()["ispezione"]["auto"] and LOOP.state["cash"] > 2000:
 		m = ISPEZIONI_LEFT.search(message.text)
 		LOOP.state["ispezione"]["rimaste"] = int(m["number"])
 		if int(m["number"]) > 0 and not LOOP.state["ispezione"]["ongoing"]:
@@ -88,6 +95,22 @@ async def avvia_nuova_ispezione(client, message):
 			async def new_inspection(ctx):
 				await ctx.client.send_message(LOOTBOT, "Ispezione 🔦")
 			LOOP.add_task(new_inspection, prio=True)
+
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Ti serve il Campo di Forza."))
+async def no_forcefield(client, message):
+	CONFIG()["ispezione"]["shield"] = False
+	LOOP.add_task(create_task("Finiti campi di forza", client=client)(mnu), prio=True)
+
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Il Campo di Forza ti fornirà protezione dalle Ispezioni per 24 ore"))
+async def attiva_campo_forza(client, message):
+	if CONFIG()["ispezione"]["auto"] and CONFIG()["ispezione"]["shield"]:
+		@create_task("Attiva il campo", client=client)
+		async def activate_it(ctx):
+			await si(ctx)
+			await random_wait()
+			await mnu(ctx)
+		LOOP.add_task(activate_it, prio=True)
+		LOOP.state["ispezione"]["ongoing"] = True
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Invia uno gnomo ad un rifugio di un altro giocatore per cercare"), group=P.insp)
 async def scegli_verso_chi(client, message):

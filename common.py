@@ -123,6 +123,7 @@ DEFAULTS = {
 	},
 	"ispezione" : {			# Do inspections
 		"auto" : False,			# Restart automatically
+		"shield" : False,		# Use forcefield instead of starting inspections
 		"mm" : True,			# Try to match with a worse player
 		"reroll" : 20,			# Retry matchmaking up to this many times
 		"keep" : 80.0			# Keep combinations with value >=
