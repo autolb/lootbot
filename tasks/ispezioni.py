@@ -38,13 +38,16 @@ async def goto_rifugio(ctx):
 
 GNOMO_CHECK = re.compile(r"Gnomo in attesa di istruzioni")
 ATTESA_ISPEZIONE = re.compile(r"🔦 Gnomo in (?:esplorazione|ispezione) fino alle (?P<time>[0-9:]+)")
+CAMPO_CHECK = re.compile(r"🚷 Protetto fino a(?:lle|) (?P<h>[0-9\:]+)")
 ISPEZIONI_RIMASTE = re.compile(r"🔦 (?P<n>[0-9]+) ispezioni possibili oggi")
 @alemiBot.on_message(filters.chat(LOOTBOT) &
 	filters.regex(pattern=r"(☀️ Buongiorno|🌙 Buonasera|🌕 Salve) [a-zA-Z0-9\_]+!"), group=P.insp)
 async def main_menu_triggers(client, message):
 	if LOOP.state["ispezione"]["rimaste"] == {}:
 		LOOP.state["ispezione"]["rimaste"] = 10
-	if ATTESA_ISPEZIONE.search(message.text) or GNOMO_CHECK.search(message.text):
+	if ATTESA_ISPEZIONE.search(message.text) \
+	or GNOMO_CHECK.search(message.text) \
+	or CAMPO_CHECK.search(message.text):
 		LOOP.state["ispezione"]["ongoing"] = True
 	match = ISPEZIONI_RIMASTE.search(message.text)
 	if match:
