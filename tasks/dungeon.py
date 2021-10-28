@@ -291,6 +291,8 @@ async def dungeon_main_screen(client, message):
 			priorities = ["Vecchina", "Alchimista dell'Ovest"] + priorities
 		if "Toc toc" in LOOP.state["imprese"]["todo"]:
 			priorities = ["Anziano Saggio"] + priorities
+		if "Io non me ne vado" in LOOP.state["imprese"]["todo"]:
+			priorities = ["Brucaliffo"] + priorities
 		if "Sarà per la prossima" in LOOP.state["imprese"]["todo"]:
 			priorities = ["Leve"] + priorities
 		if "Fissato con le pulizie" in LOOP.state["imprese"]["todo"]:
