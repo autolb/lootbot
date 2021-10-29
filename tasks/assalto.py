@@ -16,6 +16,7 @@ async def incrementa(ctx):
 		await ctx.client.send_message(LOOTBOT, "Riprendi battaglia ☄️")
 		await random_wait()
 		await ctx.client.send_message(LOOTBOT, "Incremento 💢")
+	ctx.loop.state["assalto"]["incrementando"] = False
 	await random_wait()
 	await mnu(ctx)
 
@@ -24,22 +25,25 @@ async def incrementa(ctx):
 	r"📜 Report battaglia del turno (?P<turn>[0-9]+) contro (?P<boss>.+) \((?P<type>.+)\)"
 ), group=P.norm)
 async def report_battaglia(client, message):
-	if CONFIG()["assalto"]["inc"]:
+	if CONFIG()["assalto"]["inc"] and not LOOP.state["assalto"]["incrementando"]:
 		LOOP.state["interrupt"] = True
+		LOOP.state["assalto"]["incrementando"] = True
 		LOOP.add_task(create_task("Incrementa (Report)", client=client)(incrementa))
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
 	r"(?P<monster>.*) ha raggiunto la magione, entra in battaglia e difendila prima che venga distrutta!"
 ), group=P.norm)
 async def battaglia(client, message):
-	if CONFIG()["assalto"]["inc"]:
+	if CONFIG()["assalto"]["inc"] and not LOOP.state["assalto"]["incrementando"]:
 		LOOP.state["interrupt"] = True
+		LOOP.state["assalto"]["incrementando"] = True
 		LOOP.add_task(create_task("Incrementa (Magione)", client=client)(incrementa))
 
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=
 	r"L'eletto ti incita ad attivare l'incremento per l'assalto!"
 ), group=P.norm)
 async def forgot_to_increment(client, message):
-	if CONFIG()["assalto"]["inc"]:
+	if CONFIG()["assalto"]["inc"] and not LOOP.state["assalto"]["incrementando"]:
 		LOOP.state["interrupt"] = True
+		LOOP.state["assalto"]["incrementando"] = True
 		LOOP.add_task(create_task("Incrementa (Eletto)", client=client)(incrementa))
