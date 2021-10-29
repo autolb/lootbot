@@ -893,14 +893,15 @@ STANZE CON DAILIES
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Tra una fitta coltre di fumo grigio appare un maestoso brucaliffo"), group=P.dung)
 async def regala_al_brucaliffo_per_daily(client, message):
 	if CONFIG()["dungeon"]["auto"]:
-		if CONFIG()["imprese"]["auto"] and "Io non me ne vado" in LOOP.state["imprese"]["todo"]:
+		if CONFIG()["imprese"]["auto"] and "Io non me ne vado" in LOOP.state["imprese"]["todo"] \
+		and not LOOP.state["dungeon"]["brucaliffo-no-item"]:
 			@create_task("Accetta scambio Brucaliffo", client=client)
 			async def regala_al_brucaliffo(ctx):
 				await ctx.client.send_message(LOOTBOT, "Offri...")
 				await random_wait()
 				await ctx.client.send_message(LOOTBOT, CONFIG()["dungeon"]["item"])
 				await random_wait()
-				await si(ctx)
+				await si(ctx) # This is extra if it fails! I should add a dedicated handler and listen if the gift was made
 				await random_wait()
 				await prosegui_dungeon(ctx)
 			LOOP.add_task(regala_al_brucaliffo, prio=True)
@@ -911,6 +912,11 @@ async def regala_al_brucaliffo_per_daily(client, message):
 				await random_wait()
 				await ctx.client.send_message(LOOTBOT, "Prosegui il dungeon")
 			LOOP.add_task(ignora_stanza, prio=True)
+			LOOP.state["dungeon"]["brucaliffo-no-item"] = False
+
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Non possiedi l'oggetto selezionato"), group=P.dung)
+async def cannot_do_brucaliffo(client, message):
+	LOOP.state["dungeon"]["brucaliffo-no-item"] = True
 
 # Gioielliere Pazzo
 ITEM_SEARCH = re.compile(r"in cambio di un particolare oggetto, in questo caso: (?P<item>[^✅☑️]+)(?: (?P<state>✅|☑️)|), accetti")
