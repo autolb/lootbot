@@ -13,7 +13,7 @@ from plugins.lootbot.tasks.craft import craft_sync, craft_quick
 
 PRIORITY_DEFAULT = ["-", "Persona in Pericolo", "Stanza dell'Energia", "Fontana di Mana", "Stanza Vuota",
 					 "Stanza del Cuore e dello Spirito","Stanza impolverata", "Scrigno", "Meditazione", "Stanza Divisa in Due",
-					 "Monete", "Spada o Bottino", "Pulsantiera", "Mostro", "Marinaio e Dado",
+					 "Monete", "Spada o Bottino", "Pulsantiera", "Ninfa", "Mostro", "Marinaio e Dado",
 					 "Alchimista dell'Ovest", "Mercante Draconico", "Gioielliere Pazzo", "Predone", "Viandante",
 					 "Negozio di figurine", "Due Porte", "Vecchina", "Tre Incisioni", "Anziano Saggio ",
 					 "Desideri", "Specchio Magico", "Pozzo Ricco", "Brucaliffo",
@@ -22,7 +22,7 @@ PRIORITY_DEFAULT = ["-", "Persona in Pericolo", "Stanza dell'Energia", "Fontana 
 
 PRIORITY_RUSH = ["Stanza del Cuore e dello Spirito", "Meditazione", "Spada o Bottino", "Persona in Pericolo",
 					 "Stanza Vuota", "Stanza impolverata", "-", "Mercante Draconico", "Fontana di Mana", "Monete",
-					 "Scrigno", "Vecchina", " Due Porte", "Alchimista dell'Ovest", "Gioielliere Pazzo",
+					 "Ninfa", "Scrigno", "Vecchina", " Due Porte", "Alchimista dell'Ovest", "Gioielliere Pazzo",
 					 "Stanza dell'Energia", "Predone", "Viandante", "Marinaio e Dado", "Anziano Saggio ", "Desideri",
 					 "Specchio Magico", "Negozio di figurine", "Brucaliffo", "Pozzo Ricco", "Crepaccio",
 					 "Dragone del Soldato", "Bombarolo", "Stanza Esplosiva", "Maledizione Unna", "Fessura del Muro",
@@ -547,6 +547,20 @@ async def persona_in_pericolo(client, message):
 			await random_wait()
 			await ctx.client.send_message(LOOTBOT, "Prosegui il dungeon")
 		LOOP.add_task(aiuta_persona, prio=True)
+
+# Ninfa
+@alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
+	pattern=r".*Una ragazza seduta su una roccia vicino ad una sorgente*",
+	flags=re.DOTALL)
+, group=P.dung)
+async def ragazza_seduta(client, message):
+	if CONFIG()["dungeon"]["auto"]:
+		@create_task("Avvicina ragazza (dungeon)", client=client)
+		async def avvicina_ragazza(ctx):
+			await ctx.client.send_message(LOOTBOT, "Ti avvicini alla ragazza")
+			await random_wait()
+			await ctx.client.send_message(LOOTBOT, "Prosegui il dungeon")
+		LOOP.add_task(avvicina_ragazza, prio=True)
 
 # Crepaccio | ?Marinaio e Dado | ??? | ??? | Stanza Esplosiva | Dragone del Soldato | Bombarolo
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(
