@@ -254,6 +254,8 @@ async def dungeon_main_screen(client, message):
 			await random_wait()
 			await ctx.client.send_message(LOOTBOT, "Non usare")
 			await random_wait()
+			await ctx.client.send_message(LOOTBOT, "Si")
+			await random_wait()
 			await mnu(ctx)
 		return LOOP.add_task(scappa_dal_dungeon, prio=True)
 	if CONFIG()["dungeon"]["mapmatcher"] and dung["stanza"] == dung["totali"] and not dung["once"]:
