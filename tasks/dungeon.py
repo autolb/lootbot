@@ -15,7 +15,7 @@ PRIORITY_DEFAULT = ["-", "Persona in Pericolo", "Stanza dell'Energia", "Fontana 
 					 "Stanza del Cuore e dello Spirito","Stanza impolverata", "Scrigno", "Meditazione", "Stanza Divisa in Due",
 					 "Monete", "Spada o Bottino", "Pulsantiera", "Ninfa", "Mostro", "Marinaio e Dado",
 					 "Alchimista dell'Ovest", "Mercante Draconico", "Gioielliere Pazzo", "Predone", "Viandante",
-					 "Negozio di figurine", "Due Porte", "Vecchina", "Tre Incisioni", "Anziano Saggio ",
+					 "Negozio di figurine", "Due Porte", "Vecchina", "Tre Incisioni", "Anziano Saggio",
 					 "Desideri", "Specchio Magico", "Pozzo Ricco", "Brucaliffo",
 					 "Trappola", "Ascia Gigante", "Leve", "Crepaccio", "Dragone del Soldato", "Bombarolo",
 					 "Stanza Esplosiva", "Fessura del Muro", "Mappatore Distratto", "Maledizione Unna", "Vicolo cieco"]
@@ -23,7 +23,7 @@ PRIORITY_DEFAULT = ["-", "Persona in Pericolo", "Stanza dell'Energia", "Fontana 
 PRIORITY_RUSH = ["Stanza del Cuore e dello Spirito", "Meditazione", "Spada o Bottino", "Persona in Pericolo",
 					 "Stanza Vuota", "Stanza impolverata", "-", "Mercante Draconico", "Fontana di Mana", "Monete",
 					 "Ninfa", "Scrigno", "Vecchina", " Due Porte", "Alchimista dell'Ovest", "Gioielliere Pazzo",
-					 "Stanza dell'Energia", "Predone", "Viandante", "Marinaio e Dado", "Anziano Saggio ", "Desideri",
+					 "Stanza dell'Energia", "Predone", "Viandante", "Marinaio e Dado", "Anziano Saggio", "Desideri",
 					 "Specchio Magico", "Negozio di figurine", "Brucaliffo", "Pozzo Ricco", "Crepaccio",
 					 "Dragone del Soldato", "Bombarolo", "Stanza Esplosiva", "Maledizione Unna", "Fessura del Muro",
 					 "Stanza Divisa in Due", "Mostro", "Leve", "Tre Incisioni", "Trappola", "Pulsantiera",
