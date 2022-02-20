@@ -4,15 +4,13 @@ import asyncio
 
 from pyrogram import filters
 
-from bot import alemiBot
+from alemibot import alemiBot
 
-from util.command import filterCommand
-from util.permission import is_superuser
-from util.message import edit_or_reply
+from alemibot.util import filterCommand, edit_or_reply, sudo
 
-from plugins.lootbot.common import LOOTBOT, CRAFTLOOTBOT, random_wait, CONFIG, Priorities as P
-from plugins.lootbot.tasks import mnu
-from plugins.lootbot.loop import LOOP, create_task
+from ..common import LOOTBOT, CRAFTLOOTBOT, random_wait, CONFIG, Priorities as P
+from ..tasks import mnu
+from ..loop import LOOP, create_task
 
 CRAFT_MSG = None
 
@@ -84,8 +82,10 @@ async def procedi(ctx):
 	await ctx.client.send_message(LOOTBOT, "Procedi")
 
 # Auto Craft
-@alemiBot.on_message(~filters.chat(CRAFTLOOTBOT) & is_superuser & filterCommand(["lcraft", "craft"], list(alemiBot.prefixes),
-																		flags=["-loop", "-sync", "-craft", "-stop", "-nomsg"]))
+@alemiBot.on_message(
+	~filters.chat(CRAFTLOOTBOT) & sudo & filterCommand(["lcraft", "craft"],
+	flags=["-loop", "-sync", "-craft", "-stop", "-nomsg"])
+)
 async def auto_craft(client, message):
 	global CRAFT_MSG
 	no_msg = bool(message.command["-nomsg"])

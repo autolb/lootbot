@@ -6,16 +6,14 @@ import logging
 
 from pyrogram import filters
 
-from bot import alemiBot
+from alemibot import alemiBot
 
-from util.permission import is_superuser
-from util.command import filterCommand
-from util.message import edit_or_reply
-from util.decorators import report_error, set_offline
+from alemibot.util.command import _Message as Message
+from alemibot.util import sudo, filterCommand, edit_or_reply, report_error, set_offline
 
-from plugins.lootbot.common import LOOTBOT, MAPMATCHERBOT, random_wait, CONFIG, Priorities as P
-from plugins.lootbot.tasks import si, no, mnu
-from plugins.lootbot.loop import LOOP, create_task
+from ..common import LOOTBOT, MAPMATCHERBOT, random_wait, CONFIG, Priorities as P
+from ..tasks import si, no, mnu
+from ..loop import LOOP, create_task
 
 logger = logging.getLogger(__name__)
 
@@ -140,10 +138,10 @@ async def move_mappa(ctx):
 	await ctx.client.send_message(LOOTBOT, ctx.direction)
 
 # Show current map state
-@alemiBot.on_message(is_superuser & filterCommand(["lmap"], list(alemiBot.prefixes), flags=["-list"]))
+@alemiBot.on_message(~filters.chat(LOOTBOT) & sudo & filterCommand(["lmap"], flags=["-list"]))
 @report_error(logger)
 @set_offline
-async def show_map_command(client, message):
+async def show_map_command(client:alemiBot, message:Message):
 	out = ""
 	if LOOP.state["map"]["board"] == {}:
 		out = "`[!] → ` No board in memory"

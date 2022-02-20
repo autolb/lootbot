@@ -4,11 +4,11 @@ from collections import Counter
 
 from pyrogram import filters
 
-from bot import alemiBot
+from alemibot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG, Priorities as P
-from plugins.lootbot.tasks import si, mnu
-from plugins.lootbot.loop import LOOP, create_task
+from ..common import LOOTBOT, random_wait, CONFIG, Priorities as P
+from ..tasks import si, mnu
+from ..loop import LOOP, create_task
 
 def score(numbers):
 	assert len(numbers) == 5

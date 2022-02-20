@@ -3,10 +3,10 @@ import re
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup
 
-from bot import alemiBot
+from alemibot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, LOOTPLUSBOT, random_wait, CONFIG, Priorities as P
-from plugins.lootbot.loop import LOOP, create_task
+from ..common import LOOTBOT, LOOTPLUSBOT, random_wait, CONFIG, Priorities as P
+from ..loop import LOOP, create_task
 
 CHOICES = [
 	"In groppa al drago", "Uno sopra l'altro", "La ricerca di tanto cibo", "Un gruppo di Cerbrutti",

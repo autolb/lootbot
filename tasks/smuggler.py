@@ -4,17 +4,13 @@ import asyncio
 
 from pyrogram import filters
 
-from bot import alemiBot
+from alemibot import alemiBot
 
-from util.command import filterCommand
-from util.permission import is_superuser
-from util.message import edit_or_reply
+from ..common import LOOTBOT, CRAFTLOOTBOT, random_wait, CONFIG, Priorities as P
+from ..tasks import mnu, si
+from ..loop import LOOP, create_task
 
-from plugins.lootbot.common import LOOTBOT, CRAFTLOOTBOT, random_wait, CONFIG, Priorities as P
-from plugins.lootbot.tasks import mnu, si
-from plugins.lootbot.loop import LOOP, create_task
-
-from plugins.lootbot.tasks.craft import craft_sync, craft_quick
+from .craft import craft_sync, craft_quick
 
 # Requires client
 async def contrabbandiere(ctx):

@@ -2,14 +2,14 @@ import re
 
 from pyrogram import filters
 
-from bot import alemiBot
+from alemibot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, CONFIG, random_wait, Priorities as P
-from plugins.lootbot.tasks import mnu, si
-from plugins.lootbot.loop import LOOP, create_task
+from ..common import LOOTBOT, CONFIG, random_wait, Priorities as P
+from ..tasks import mnu, si
+from ..loop import LOOP, create_task
 
-from plugins.lootbot.tasks.dungeon import dungeon
-from plugins.lootbot.tasks.missioni import missione
+from .dungeon import dungeon
+from .missioni import missione
 
 # Extra estrazione
 @alemiBot.on_message(filters.chat(LOOTBOT) & filters.regex(pattern=r"Durante l'estrazione di Mana trovi una vena più ricca del solito!"), group=P.rand)

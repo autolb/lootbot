@@ -2,15 +2,13 @@ import re
 
 from pyrogram import filters
 
-from bot import alemiBot
+from alemibot import alemiBot
+from alemibot.util import sudo, edit_or_reply, filterCommand
+from alemibot.util.command import _Message as Message
 
-from util.message import edit_or_reply
-from util.permission import is_superuser
-from util.command import filterCommand
-
-from plugins.lootbot.tasks import mnu
-from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG, Priorities as P
-from plugins.lootbot.loop import LOOP, create_task
+from ..tasks import mnu
+from ..common import LOOTBOT, random_wait, CONFIG, Priorities as P
+from ..loop import LOOP, create_task
 
 MSG = None
 
@@ -18,8 +16,8 @@ MSG = None
 async def return_to_casadineve(ctx):
 	await ctx.client.send_message(LOOTBOT, "🎄 Villaggio Innevato (Evento) 🌨")
 
-@alemiBot.on_message(is_superuser & filterCommand(["lpalle", "lneve"], list(alemiBot.prefixes), flags=["-stop"]))
-async def auto_palle_neve(client, message):
+@alemiBot.on_message(~filters.chat(LOOTBOT) & sudo & filterCommand(["lpalle", "lneve"], flags=["-stop"]))
+async def auto_palle_neve(client:alemiBot, message:Message):
 	global MSG
 	if message.command["-stop"]:
 		LOOP.state["snow"]["target"] = None

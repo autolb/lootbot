@@ -12,7 +12,7 @@ from typing import Any
 
 from pyrogram.raw.functions.account import UpdateStatus
 
-from plugins.lootbot.common import random_wait, CONFIG, LOOTBOT
+from .common import random_wait, CONFIG, LOOTBOT
 
 logger = logging.getLogger(__name__)
 

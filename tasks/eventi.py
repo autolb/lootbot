@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 
 from pyrogram import filters
 
-from bot import alemiBot
+from alemibot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, CONFIG, random_wait, Priorities as P
-from plugins.lootbot.tasks import mnu, si
-from plugins.lootbot.loop import LOOP, create_task
+from ..common import LOOTBOT, CONFIG, random_wait, Priorities as P
+from ..tasks import mnu, si
+from ..loop import LOOP, create_task
 
 # Requires client
 async def dust_gen(ctx):

@@ -3,18 +3,17 @@ import json
 import random
 from datetime import datetime
 
-import requests
-
+import aiohttp
 from pyrogram import filters
 
-from bot import alemiBot
+from alemibot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, CONFIG, random_wait, Priorities as P
-from plugins.lootbot.tasks import mnu, rifugio
-from plugins.lootbot.loop import LOOP, create_task
+from ..common import LOOTBOT, CONFIG, random_wait, Priorities as P
+from ..tasks import mnu, rifugio
+from ..loop import LOOP, create_task
 
-from plugins.lootbot.tasks.dungeon import dungeon
-from plugins.lootbot.tasks.missioni import missione
+from .dungeon import dungeon
+from .missioni import missione
 
 @alemiBot.on_message(group=P.last)
 async def sync_state(client, message):
@@ -38,9 +37,10 @@ async def sync_state(client, message):
 		if LOOP.state["itinerario"]["non-disponibile"]:
 			LOOP.state["itinerario"]["non-disponibile"] = False
 		if CONFIG()["sync"]["friends"]["auto"]:
-			r = requests.get(CONFIG()["sync"]["friends"]["url"])
-			with open("plugins/lootbot/data/friends.json", "w") as f:
-				json.dump(r.json(), f)
+			async with aiohttp.ClientSession() as sess:
+				async with sess.get(CONFIG()["sync"]["friends"]["url"]) as res:
+					with open("plugins/lootbot/data/friends.json", "w") as f:
+						json.dump(await res.json(), f)
 		with open("plugins/lootbot/data/friends.json") as f:
 			LOOP.state["friends"] = json.load(f)
 

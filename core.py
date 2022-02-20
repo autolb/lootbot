@@ -1,33 +1,25 @@
 import asyncio
+import aiohttp
+import logging
 import json
-import time
-import sys
 import ast
 import io
 
 from typing import Optional, Any
 
-import requests
-
 from pyrogram import filters
 
-from util.permission import is_superuser
-from util.command import filterCommand
-from util.message import ProgressChatAction, edit_or_reply
-from util.decorators import report_error, set_offline, cancel_chat_action
+from alemibot import alemiBot
+from alemibot.util import sudo, filterCommand, ProgressChatAction, edit_or_reply, report_error, set_offline, cancel_chat_action
 
-from bot import alemiBot
-
-import logging
-logger = logging.getLogger(__name__)
-
-from plugins.lootbot.common import CONFIG
-from plugins.lootbot.loop import LOOP, StateDict
+from .common import CONFIG
+from .loop import LOOP, StateDict
 
 TASK_INTERRUPT = False
+logger = logging.getLogger(__name__)
 
 # Macro for night mode
-@alemiBot.on_message(is_superuser & filterCommand(["lnight", "lnt"], list(alemiBot.prefixes)))
+@alemiBot.on_message(sudo & filterCommand(["lnight", "lnt"]))
 @report_error(logger)
 @set_offline
 async def toggle_night(client, message):
@@ -37,7 +29,7 @@ async def toggle_night(client, message):
 	await CONFIG.serialize()
 	await edit_or_reply(message, f"` → ` Night mode [`{'ON' if CONFIG()['night'] else 'OFF'}`]")
 
-@alemiBot.on_message(is_superuser & filterCommand(["lfriend", "lfriends"], list(alemiBot.prefixes)))
+@alemiBot.on_message(sudo & filterCommand(["lfriend", "lfriends"]))
 @report_error(logger)
 @set_offline
 async def sync_friends_command(client, message):
@@ -46,7 +38,9 @@ async def sync_friends_command(client, message):
 		CONFIG()["sync"]["friends"]["url"] = message.command.arg[0]
 		await CONFIG.serialize()
 		out += f"` → lb.sync.friends.url` : --{message.command.arg[0]}--\n" 
-	data = requests.get(CONFIG()["sync"]["friends"]["url"]).json()
+	async with aiohttp.ClientSession() as sess:
+		async with sess.get(CONFIG()["sync"]["friends"]["url"]) as res:
+			data = await res.json()
 	with open("plugins/lootbot/data/friends.json", "w") as f:
 		json.dump(data, f)
 	LOOP.state["friends"] = data
@@ -74,7 +68,7 @@ def _extract(data:dict, query:str) -> Optional[Any]:
 			return None
 	return data
 
-@alemiBot.on_message(is_superuser & filterCommand(["lvar", "lvars"], list(alemiBot.prefixes)))
+@alemiBot.on_message(sudo & filterCommand(["lvar", "lvars"]))
 @report_error(logger)
 @set_offline
 @cancel_chat_action
@@ -101,7 +95,7 @@ def _parse_val(val:str) -> Any:
 	except Exception:
 		return val
 
-@alemiBot.on_message(is_superuser & filterCommand(["lcfg", "lconfig", "lset"], list(alemiBot.prefixes), flags=["-f", "-state"]))
+@alemiBot.on_message(sudo & filterCommand(["lcfg", "lconfig", "lset"], flags=["-f", "-state"]))
 @report_error(logger)
 @set_offline
 async def get_config(client, message):
@@ -135,7 +129,7 @@ async def get_config(client, message):
 		out = f"`{text} → `" + format_recursive(data, 0)
 		await edit_or_reply(message, out)
 
-@alemiBot.on_message(is_superuser & filterCommand(["ltask", "task", "tasks"], list(alemiBot.prefixes), options={
+@alemiBot.on_message(sudo & filterCommand(["ltask", "task", "tasks"], options={
 	"updates" : ["-u", "-upd"],
 	"interval" : ["-i", "-int"]
 }, flags=["-stop"]))

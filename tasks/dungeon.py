@@ -3,31 +3,35 @@ import random
 
 from pyrogram import filters
 
-from bot import alemiBot
+from alemibot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, MAPMATCHERBOT, random_wait, CONFIG, Priorities as P
-from plugins.lootbot.tasks import si, no, mnu
-from plugins.lootbot.loop import LOOP, create_task
+from ..common import LOOTBOT, MAPMATCHERBOT, random_wait, CONFIG, Priorities as P
+from ..tasks import si, no, mnu
+from ..loop import LOOP, create_task
 
-from plugins.lootbot.tasks.craft import craft_sync, craft_quick
+from .craft import craft_sync, craft_quick
 
-PRIORITY_DEFAULT = ["-", "Persona in Pericolo", "Stanza dell'Energia", "Fontana di Mana", "Stanza Vuota",
-					 "Stanza del Cuore e dello Spirito","Stanza impolverata", "Scrigno", "Meditazione", "Stanza Divisa in Due",
-					 "Monete", "Spada o Bottino", "Pulsantiera", "Mostro", "Marinaio e Dado",
-					 "Alchimista dell'Ovest", "Mercante Draconico", "Gioielliere Pazzo", "Predone", "Viandante",
-					 "Negozio di figurine", "Due Porte", "Vecchina", "Tre Incisioni", "Anziano Saggio ",
-					 "Desideri", "Specchio Magico", "Pozzo Ricco", "Brucaliffo",
-					 "Trappola", "Ascia Gigante", "Leve", "Crepaccio", "Dragone del Soldato", "Bombarolo",
-					 "Stanza Esplosiva", "Fessura del Muro", "Mappatore Distratto", "Maledizione Unna", "Vicolo cieco"]
+PRIORITY_DEFAULT = [
+	"-", "Persona in Pericolo", "Stanza dell'Energia", "Fontana di Mana", "Stanza Vuota",
+	"Stanza del Cuore e dello Spirito","Stanza impolverata", "Scrigno", "Meditazione", "Stanza Divisa in Due",
+	"Monete", "Spada o Bottino", "Pulsantiera", "Mostro", "Marinaio e Dado",
+	"Alchimista dell'Ovest", "Mercante Draconico", "Gioielliere Pazzo", "Predone", "Viandante",
+	"Negozio di figurine", "Due Porte", "Vecchina", "Tre Incisioni", "Anziano Saggio ",
+	"Desideri", "Specchio Magico", "Pozzo Ricco", "Brucaliffo",
+	"Trappola", "Ascia Gigante", "Leve", "Crepaccio", "Dragone del Soldato", "Bombarolo",
+	"Stanza Esplosiva", "Fessura del Muro", "Mappatore Distratto", "Maledizione Unna", "Vicolo cieco"
+]
 
-PRIORITY_RUSH = ["Stanza del Cuore e dello Spirito", "Meditazione", "Spada o Bottino", "Persona in Pericolo",
-					 "Stanza Vuota", "Stanza impolverata", "-", "Mercante Draconico", "Fontana di Mana", "Monete",
-					 "Scrigno", "Vecchina", " Due Porte", "Alchimista dell'Ovest", "Gioielliere Pazzo",
-					 "Stanza dell'Energia", "Predone", "Viandante", "Marinaio e Dado", "Anziano Saggio ", "Desideri",
-					 "Specchio Magico", "Negozio di figurine", "Brucaliffo", "Pozzo Ricco", "Crepaccio",
-					 "Dragone del Soldato", "Bombarolo", "Stanza Esplosiva", "Maledizione Unna", "Fessura del Muro",
-					 "Stanza Divisa in Due", "Mostro", "Leve", "Tre Incisioni", "Trappola", "Pulsantiera",
-					 "Ascia Gigante", "Mappatore Distratto", "Vicolo cieco"]
+PRIORITY_RUSH = [
+	"Stanza del Cuore e dello Spirito", "Meditazione", "Spada o Bottino", "Persona in Pericolo",
+	"Stanza Vuota", "Stanza impolverata", "-", "Mercante Draconico", "Fontana di Mana", "Monete",
+	"Scrigno", "Vecchina", " Due Porte", "Alchimista dell'Ovest", "Gioielliere Pazzo",
+	"Stanza dell'Energia", "Predone", "Viandante", "Marinaio e Dado", "Anziano Saggio ", "Desideri",
+	"Specchio Magico", "Negozio di figurine", "Brucaliffo", "Pozzo Ricco", "Crepaccio",
+	"Dragone del Soldato", "Bombarolo", "Stanza Esplosiva", "Maledizione Unna", "Fessura del Muro",
+	"Stanza Divisa in Due", "Mostro", "Leve", "Tre Incisioni", "Trappola", "Pulsantiera",
+	"Ascia Gigante", "Mappatore Distratto", "Vicolo cieco"
+]
 
 DIREZIONI = ["⬅️", "⬆️", "➡️"]
 
@@ -113,7 +117,7 @@ async def main_menu_triggers(client, message): # TODO maybe move main menu tasks
 			LOOP.state["dungeon"]["cooldown"] = False
 	elif DUNGEON_RESTART.search(message.text):
 		LOOP.state["dungeon"]["cooldown"] = False
-		if LOOP.state["me"]["rinascita"] == "✨" and LOOP.state["lvl"] and LOOP.state["lvl"] < 50:
+		if LOOP.state["me"]["rinascita"] == "✨" and LOOP.state["me"]["lvl"] and LOOP.state["me"]["lvl"] < 50:
 			return
 		if len(LOOP) < 1 and CONFIG()["dungeon"]["start"]:
 			LOOP.add_task(create_task("Check + restart dungeon", client=client)(dungeon))

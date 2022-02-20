@@ -3,20 +3,17 @@ import asyncio
 
 from pyrogram import filters
 
-from bot import alemiBot
+from alemibot import alemiBot
+from alemibot.util import filterCommand, edit_or_reply, sudo
 
-from util.command import filterCommand
-from util.permission import is_superuser
-from util.message import edit_or_reply
-
-from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG, Priorities as P
-from plugins.lootbot.tasks import si, mnu, emporio
-from plugins.lootbot.loop import LOOP, create_task
+from ..common import LOOTBOT, random_wait, CONFIG, Priorities as P
+from ..tasks import si, mnu, emporio
+from ..loop import LOOP, create_task
 
 # Auto buy Forzieri
 TIERS = ["Epico", "Leggendario", "di Diamante", "Prezioso", "di Ferro", "di Legno"]
-@alemiBot.on_message(is_superuser & filterCommand(["forzieri", "lchest", "lch"], list(alemiBot.prefixes)))
-async def auto_buy_chests(client, message):
+@alemiBot.on_message(sudo & filterCommand(["forzieri", "lchest", "lch"]))
+async def auto_buy_chests(client:alemiBot, message):
 	LOOP.state["auto-chest"] = True
 	for tier in TIERS:
 		@create_task(f"Compra Scrigni {tier}", client=client, tier=tier)

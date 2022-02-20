@@ -7,7 +7,7 @@ import os
 from enum import Enum
 from typing import Union
 
-from bot import alemiBot
+from alemibot import alemiBot
 from pyrogram import filters
 
 # ids
@@ -227,14 +227,20 @@ class MessageLoader(ConfigLoader):
 	You should only use saved messages or channels since they can be edited forever.
 	Using a group or direct message will break changing config, but will load fine.
 	Needs a known message_id at least"""
-	def __init__(self, client, msg_id:int, chan:Union[str,int]="me"):
+	client : alemiBot
+	msg_id : int
+	chan : Union[int, str]
+
+	def __init__(self, client:alemiBot, msg_id:int, chan:Union[str,int]="me"):
 		self.msg_id = msg_id
-		self.chan = int(chan) if chan.isnumeric() else chan
+		self.chan = int(chan) if isinstance(chan, str) and chan.isnumeric() else chan
 		self.client = client
 
 	async def unserialize(self) -> dict:
 		msg = await self.client.get_messages(self.chan, self.msg_id)
-		if msg.empty:
+		if isinstance(msg, list): # not really necessary but will make mypy shut up
+			msg = msg[0]
+		if msg.empty or not msg.text:
 			return {}
 		return json.loads(msg.text)
 
@@ -312,7 +318,7 @@ class ConfigHolder:
 
 CONFIG = ConfigHolder()
 
-@alemiBot.on_client_status(filters.client_ready)
+@alemiBot.on_ready()
 async def load_config(client, status_update):
 	loader = alemiBot.config.get("lbconfig", "loader", fallback="file").lower().strip()
 	logging.info("Loading config with loader '%s'", loader)

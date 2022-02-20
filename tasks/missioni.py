@@ -3,11 +3,11 @@ import asyncio
 
 from pyrogram import filters
 
-from bot import alemiBot
+from alemibot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG, Rarity, Priorities as P
-from plugins.lootbot.tasks import si, mnu
-from plugins.lootbot.loop import LOOP, create_task
+from ..common import LOOTBOT, random_wait, CONFIG, Rarity, Priorities as P
+from ..tasks import si, mnu
+from ..loop import LOOP, create_task
 
 def automission_check():
 	return (CONFIG()["mission"]["auto"] or

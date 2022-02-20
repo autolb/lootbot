@@ -2,13 +2,13 @@ import re
 
 from pyrogram import filters
 
-from bot import alemiBot
+from alemibot import alemiBot
 
-from plugins.lootbot.common import LOOTBOT, random_wait, CONFIG, Priorities as P
-from plugins.lootbot.tasks import mnu, si
-from plugins.lootbot.loop import LOOP, create_task
+from ..common import LOOTBOT, random_wait, CONFIG, Priorities as P
+from ..tasks import mnu, si
+from ..loop import LOOP, create_task
 
-from plugins.lootbot.tasks.craft import craft_sync
+from .craft import craft_sync
 
 IMPRESE = {
 	"Ficcanaso" : "Spiare giocatori (non dal plus)",
