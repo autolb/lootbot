@@ -319,7 +319,7 @@ class ConfigHolder:
 CONFIG = ConfigHolder()
 
 @alemiBot.on_ready()
-async def load_config(client, status_update):
+async def load_config(client):
 	loader = alemiBot.config.get("lbconfig", "loader", fallback="file").lower().strip()
 	logging.info("Loading config with loader '%s'", loader)
 	if loader == "message":
