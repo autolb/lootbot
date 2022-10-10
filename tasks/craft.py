@@ -67,10 +67,10 @@ async def craft_sync(ctx):
 	global CRAFT_MSG
 	await sync_inventory(ctx)
 	if CRAFT_MSG:
-		CRAFT_MSG = await edit_or_reply(CRAFT_MSG, "<code>→ </code> Synched inventory", parse_mode="html")
+		CRAFT_MSG = await edit_or_reply(CRAFT_MSG, "<code>→ </code> Synched inventory", parse_mode=ParseMode.HTML)
 	await craft(ctx)
 	if CRAFT_MSG:
-		CRAFT_MSG = await edit_or_reply(CRAFT_MSG, "<code>→ </code> Started craft loop", parse_mode="html")
+		CRAFT_MSG = await edit_or_reply(CRAFT_MSG, "<code>→ </code> Started craft loop", parse_mode=ParseMode.HTML)
 
 # Requires client, message
 async def craft_loop(ctx):
@@ -95,23 +95,23 @@ async def auto_craft(client, message):
 		i = LOOP.state["craft"]["index"]
 		tot = LOOP.state["craft"]["total"]
 		if CRAFT_MSG:
-			await edit_or_reply(CRAFT_MSG, f"<code>[!] → </code> Stopped <code>{curr}</code> [<code>{i}/{tot}</code>]", parse_mode="html")
+			await edit_or_reply(CRAFT_MSG, f"<code>[!] → </code> Stopped <code>{curr}</code> [<code>{i}/{tot}</code>]", parse_mode=ParseMode.HTML)
 	elif message.command["-loop"]:
 		LOOP.add_task(create_task(f"Craft loop (forced)", client=client)(craft_loop))
-		CRAFT_MSG = await edit_or_reply(message, "<code>→ </code> Force started craft loop", parse_mode="html")
+		CRAFT_MSG = await edit_or_reply(message, "<code>→ </code> Force started craft loop", parse_mode=ParseMode.HTML)
 	elif message.command["-sync"]:
 		LOOP.add_task(create_task("Sync with CraftLootBot", client=client)(sync_inventory))
-		CRAFT_MSG = await edit_or_reply(message, "<code> → </code> Synching inventory (no craft)", parse_mode="html")
+		CRAFT_MSG = await edit_or_reply(message, "<code> → </code> Synching inventory (no craft)", parse_mode=ParseMode.HTML)
 	elif len(message.command) < 1:
-		return await edit_or_reply(message, "<code>[!] → </code> No arg given", parse_mode="html")
+		return await edit_or_reply(message, "<code>[!] → </code> No arg given", parse_mode=ParseMode.HTML)
 	elif message.command["-craft"]:
 		target = message.command.text
 		LOOP.add_task(create_task(f"Craft {target} (nosync)", client=client, recipe=message.command.text)(craft))
-		CRAFT_MSG = await edit_or_reply(message, "<code>→ </code> Started craft loop (no sync)", parse_mode="html")
+		CRAFT_MSG = await edit_or_reply(message, "<code>→ </code> Started craft loop (no sync)", parse_mode=ParseMode.HTML)
 	else:
 		target = message.command.text
 		LOOP.add_task(create_task(f"Craft {target}", client=client, recipe=target)(craft_sync))
-		CRAFT_MSG = await edit_or_reply(message, "<code>→ </code> Synching inventory", parse_mode="html")
+		CRAFT_MSG = await edit_or_reply(message, "<code>→ </code> Synching inventory", parse_mode=ParseMode.HTML)
 	if no_msg:
 		CRAFT_MSG = None
 
@@ -134,7 +134,7 @@ async def craft_confirmation(client, message):
 			if CRAFT_MSG:
 				i = LOOP.state["craft"]["index"]
 				tot = LOOP.state["craft"]["total"]
-				await edit_or_reply(CRAFT_MSG, f"<code>[!] → </code> <b>Failed</b> <b>{curr}</b> [<code>{i}/{tot}</code>]", parse_mode="html")
+				await edit_or_reply(CRAFT_MSG, f"<code>[!] → </code> <b>Failed</b> <b>{curr}</b> [<code>{i}/{tot}</code>]", parse_mode=ParseMode.HTML)
 				CRAFT_MSG = None
 			if CONFIG()["log"]["pin"]["craft"]:
 				await message.pin()
@@ -145,7 +145,7 @@ async def craft_confirmation(client, message):
 				if CRAFT_MSG:
 					i = LOOP.state["craft"]["index"]
 					tot = LOOP.state["craft"]["total"]
-					CRAFT_MSG = await edit_or_reply(CRAFT_MSG, f"<code> → </code> <b>{curr}</b> [<code>{i}/{tot}</code>]", parse_mode="html")
+					CRAFT_MSG = await edit_or_reply(CRAFT_MSG, f"<code> → </code> <b>{curr}</b> [<code>{i}/{tot}</code>]", parse_mode=ParseMode.HTML)
 			else:
 				LOOP.state["craft"]["ongoing"] = False
 				LOOP.add_task(create_task("Craft finished", client=client)(mnu))
@@ -154,7 +154,7 @@ async def craft_confirmation(client, message):
 					i = LOOP.state["craft"]["index"]
 					await edit_or_reply(CRAFT_MSG,
 							f"<code> → </code> <b>{curr}</b> [<code>{i}/{tot}</code>]\n<code>→ </code> Done (<code>{tot}</code> crafted)",
-							parse_mode="html")
+							parse_mode=ParseMode.HTML)
 					CRAFT_MSG = None
 
 FULL_BACKPACK_CHECK = re.compile(r"([^ ]+), ecco il contenuto del tuo zaino:")
