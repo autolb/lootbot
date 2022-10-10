@@ -299,7 +299,7 @@ class ConfigHolder:
 	Calling the config holder itself will return the config dictionary"""
 	def __init__(self):
 		self.store : dict = DEFAULTS
-		self.loader : ConfigLoader = None
+		self.loader : ConfigLoader = FileLoader("plugins/lootbot/data/config.json")
 
 	def __call__(self) -> dict:
 		return self.store
@@ -328,12 +328,12 @@ async def load_config(client, status_update):
 			int(alemiBot.config.get("lbconfig", "msg_id")),
 			alemiBot.config.get("lbconfig", "chan_id", fallback="me")
 		)
-	else: # file is default loader
-		if loader != "file":
-			logging.error("Invalid ConfigLoader type provided, defaulting to 'file'. Valid are ('file', 'message')")
+	elif loader == "file":
 		CONFIG.loader = FileLoader(
 			alemiBot.config.get("lbconfig", "path", fallback="plugins/lootbot/data/config.json")
 		)
+	else:
+		logging.error("Invalid ConfigLoader type provided, defaulting to 'file'. Valid are ('file', 'message')")
 	await CONFIG.unserialize()
 
 # Global utilities
