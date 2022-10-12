@@ -82,6 +82,7 @@ DEFAULTS = {
 			"rateo" : [20, 15, 15], # Mana ratio to use to recraft spells
 		},
 		"incisioni" : True,		# Try unsure incisions
+		"draconico" : False,	# NEW always do mercante draconico
 		"try-buttons" : True,	# Try all icy buttons
 		"item" : "Pozione piccola", # Item to gift to Brucaliffo
 		"kit" : {				# Sword thingy
