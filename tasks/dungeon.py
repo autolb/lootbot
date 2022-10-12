@@ -1045,9 +1045,9 @@ OGGETTO_DRACONICO = re.compile(r"fornisce oggetti utili al proprio drago in camb
 async def acquista_draconico_se_daily(client, message):
 	if CONFIG()["dungeon"]["auto"]:
 		match = OGGETTO_DRACONICO.search(message.text)
-		if CONFIG()["dungeon"]["draconico"] or (
-			CONFIG()["imprese"]["auto"] and "Scambio draconico" in LOOP.state["imprese"]["todo"]
-			and match and match["state"] == "✅"
+		if match and match["state"] == "✅" and (
+			CONFIG()["dungeon"]["draconico"] or
+			(CONFIG()["imprese"]["auto"] and "Scambio draconico" in LOOP.state["imprese"]["todo"])
 		):
 			@create_task("Accetta offerta Mercante Draconico", client=client)
 			async def accept_drac(ctx):
